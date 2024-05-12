@@ -1,0 +1,9 @@
+[package]
+name = "engine_test"
+version = "0.1.0"
+authors = ["EinsteinDB Developer Group"]
+edition = "2021"
+description = "Test engine"
+
+[lib]
+path = "./src/lib.rs"

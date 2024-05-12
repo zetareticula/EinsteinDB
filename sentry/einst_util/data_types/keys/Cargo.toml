@@ -1,0 +1,20 @@
+[package]
+name = "einsteindb-prod"
+version = "0.0.1"
+edition = "2018"
+publish = false
+
+[features]
+protobuf-codec = ["ekvproto/protobuf-codec"]
+prost-codec = ["ekvproto/prost-codec"]
+
+[dependencies]
+byteorder = "1.2"
+derive_more = "0.99.3"
+failure = "0.1"
+hex = "0.4"
+ekvproto = { git = "https://github.com/whtcorpsinc/ekvproto.git", default-features = false }
+edb_alloc = { path = "../edb_alloc" }
+
+[dev-dependencies]
+panic_hook = { path = "../panic_hook" }

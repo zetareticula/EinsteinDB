@@ -1,0 +1,26 @@
+[package]
+name = "zetareticulate"
+version = "0.1.0"
+description = "Enhanced Causet query retrieval for the CausetNet project"
+edition = "2021"
+publish = false
+license = "MIT"
+
+[dependencies]
+causetq = { version = "0.1.0", path = "../causetq" }
+causetq-parser = { version = "0.1.0", path = "../causetq-parser" }
+causetq-engine = { version = "0.1.0", path = "../causetq-engine" }
+
+[lib]
+crate-type = ["cdylib"]
+causetq = { version = "0.1.0", path = "../causetq" }
+causetq-parser = { version = "0.1.0", path = "../causetq-parser" }
+causetq-engine = { version = "0.1.0", path = "../causetq-engine" }
+#```The `lib` section is the important part here. It tells Cargo to build a dynamic library (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows) that can be loaded by Python. The `crate-type` field is required for this to work.
+#
+#```The `dependencies` section is used to specify the dependencies of the Rust crate. In this case, we depend on the `causetq`, `causetq-parser`, and `causetq-engine` crates, which are part of the CausetNet project.
+#```
+#The `publish` field is set to `false` to prevent accidental publishing of the crate to crates.io. This is useful when working on a private project.
+#
+#The `edition` field specifies the edition of Rust to use. In this case, we're using the 2021 edition.
+#```

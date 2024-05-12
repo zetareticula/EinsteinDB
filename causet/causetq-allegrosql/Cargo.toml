@@ -1,0 +1,12 @@
+[package]
+name = "causetq"
+version = "0.0.1"
+workspace = ".."
+
+[lib]
+name = "causetq_allegrosql"
+path = "lib.rs"
+
+[dependencies]
+failure = "0.1.1"
+failure_derive = "0.1.1"

@@ -1,0 +1,18 @@
+[package]
+name = "causetq"
+version = "0.1.0"
+edition = "2021"
+author = "Karl Whitford <karl@einst.ai>"
+description = "A simple, fast, and efficient queue for causetq allegro lisp library"
+license = "MIT"
+keywords = ["causal set queue", "causetq", "causetq allegro lisp"]
+
+
+
+[dependencies]
+slog = "1.0.1138"
+einstein_db= {path="../einstein_db"}
+einstein_db_ctl = {path="../einstein_db_ctl"}
+einstein_ml = {path="../einstein_ml"}
+
+

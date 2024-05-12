@@ -1,0 +1,6 @@
+[package]
+name = "einsteindb_server"
+version = "0.1.0"
+edition = "2021"
+authors = ["einstein_db"]
+description = "einstein_db server"

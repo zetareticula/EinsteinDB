@@ -1,0 +1,31 @@
+[package]
+name = "test_causet_storage"
+version = "0.0.1"
+edition = "2018"
+publish = false
+
+[features]
+protobuf-codec = [
+  "ekvproto/protobuf-codec",
+  "violetabftstore/protobuf-codec",
+  "test_violetabftstore/protobuf-codec",
+  "edb/protobuf-codec",
+  "txn_types/protobuf-codec",
+]
+prost-codec = [
+  "ekvproto/prost-codec",
+  "violetabftstore/prost-codec",
+  "test_violetabftstore/prost-codec",
+  "edb/prost-codec",
+  "txn_types/prost-codec",
+]
+
+[dependencies]
+futures = "0.3"
+ekvproto = { git = "https://github.com/whtcorpsinc/ekvproto.git", default-features = false }
+violetabftstore = { path = "../violetabftstore" }
+fidel_client = { path = "../fidel_client" }
+test_violetabftstore = { path = "../test_violetabftstore" }
+edb = { path = "../../", default-features = false }
+violetabftstore::interlock:: = { path = "../violetabftstore::interlock::" }
+txn_types = { path = "../txn_types" }

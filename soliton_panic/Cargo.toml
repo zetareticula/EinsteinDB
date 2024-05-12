@@ -1,0 +1,18 @@
+[package]
+name = "soliton_panic"
+version = "0.1.0"
+description = "Soliton Panic"
+edition = "2021"
+publish = false
+license = "MIT"
+
+
+[dependencies]
+indexmap = "1"
+ordered-float = "3.0.0"
+time = "0.3.7"
+petgraph = "0.6.0"
+
+
+
+
