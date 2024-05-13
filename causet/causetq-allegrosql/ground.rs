@@ -14,7 +14,8 @@ extern crate allegrosql_promises;
 extern crate edb_causetq_parityfilter;
 extern crate causetq_parityfilter_promises;
 
-mod utils;
+use edbn::Keyword;
+
 
 use std::collections::BTreeMap;
 
@@ -28,11 +29,7 @@ use causetq_allegrosql::{
     SchemaReplicant,
 };
 
-use causetq::*::{
-    Keyword,
-    PlainSymbol,
-    ToUpper,
-};
+use edbn::PlainSymbol;
 
 use causetq_parityfilter_promises::errors::{
     ParityFilterError,

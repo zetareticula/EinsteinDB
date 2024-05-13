@@ -26,9 +26,25 @@
 //OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-mod field_type;
-mod tx_observer;
-mod vector;
+// mod field_type;
+// mod tx_observer;
+// mod vector;
+
+mod causetq;
+mod merkletree;
+mod einstein_db;
+mod einstein_ml;
+mod einstein_allegrosql;
+mod einstein_causetq;
+
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::RecvError;
+use std::sync::mpsc::TryRecvError;
+use std::sync::mpsc::TrySendError;
+
+
+use std::sync::mpsc::SendError;
+use std::sync::mpsc::RecvTimeoutError;
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Partitioning};
@@ -109,6 +125,31 @@ pub struct CausetQueryWithLamportAndMerkleTree {
 }
 
 
+#[derive(Debug)]
+pub struct CausetResponseWithLamportAndMerkleTree {
+    //Einstein Merkle Tree Index (Merkle Tree Index)
+    pub merkle_tree_index: u64,
+    //Einstein Merkle Tree Hash (Merkle Tree Hash)
+    pub merkle_tree_hash: String,
+    //Einstein Merkle Tree Hash (Merkle Tree Hash)
+    pub lamport_clock: u64,
+    //Einstein Merkle Tree Hash (Merkle Tree Hash)
+    pub response: String,
+}
+
+#[derive(Debug)]
+pub struct CausetqWithLamportAndMerkleTree {
+    //Einstein Merkle Tree Index (Merkle Tree Index)
+    pub merkle_tree_index: u64,
+    //Einstein Merkle Tree Hash (Merkle Tree Hash)
+    pub merkle_tree_hash: String,
+    //Einstein Merkle Tree Hash (Merkle Tree Hash)
+    pub lamport_clock: u64,
+    //Einstein Merkle Tree Hash (Merkle Tree Hash)
+    pub query: String,
+    //Einstein Merkle Tree Hash (Merkle Tree Hash)
+    pub response: String,
+}
 
 
 

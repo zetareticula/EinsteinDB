@@ -88,8 +88,6 @@ extern crate lazy_static;
 extern crate einsteindb_util;
 
 
-
-
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::collections::hash_map::Iter;

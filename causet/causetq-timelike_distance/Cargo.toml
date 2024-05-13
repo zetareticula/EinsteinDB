@@ -3,16 +3,25 @@ name = "edb_causetq_projector"
 version = "0.0.1"
 workspace = ".."
 
+
 [features]
 sqlcipher = ["rusqlite/sqlcipher"]
+
 
 [dependencies]
 failure = "0.1.1"
 indexmap = "1"
 
+
+
 [dependencies.rusqlite]
 version = "0.13"
 features = ["limits"]
+
+[dependencies.rusqlite-causetq]
+path = "../rusqlite-causetq"
+
+
 
 [dependencies.allegrosql_promises]
 path = "../allegro-promises"
@@ -26,8 +35,8 @@ path = "../allegro"
 [dependencies.einstein_db]
 path = "../edb"
 
-[dependencies.causetq_pull_promises]
-path = "../edb-promises"
+[dependencies.edb_causetq]
+path = "../causetq"
 
 [dependencies.edb_causetq_parityfilter]
 path = "../causetq-parityfilter"

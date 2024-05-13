@@ -28,12 +28,14 @@ log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug
 prometheus = { version = "0.8", features = ["nightly", "push"] }
 quick-error = "1.2.3"
 security = { path = "../security" }
+serde_json = "1.0"
 serde = "1.0"
 serde_derive = "1.0"
 slog = { version = "2.3", features = ["max_level_trace", "release_max_level_debug"] }
 slog-global = { version = "0.1", git = "https://github.com/breeswish/slog-global.git", rev = "0e23a5baff302a9d7bccd85f8f31e43339c2f2c1" }
 edb_alloc = { path = "../edb_alloc" }
-violetabftstore::interlock:: = { path = "../violetabftstore::interlock::" }
+edb_error = { path = "../edb_error" }
+edb_util = { path = "../edb_util" }
 tokio-timer = "0.2"
 txn_types = { path = "../txn_types" }
 semver = "0.10"

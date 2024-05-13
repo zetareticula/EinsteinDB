@@ -12,3 +12,26 @@ codegen-units = 1
 panic = "unwind"
 incremental = false
 overflow-checks = false
+
+# Configuration for benchmarking builds, that is builds that are
+# optimized for performance and benchmarking.
+
+[profile.bench]
+opt-level = 3
+debug = false
+rpath = false
+
+# Configuration for debug builds, that is builds that are optimized for
+# debugging and development.
+
+[profile.dev]
+opt-level = 0
+debug = true
+rpath = false
+
+# Configuration for test builds, that is builds that are optimized for
+# running tests.
+
+[profile.test]
+opt-level = 0
+debug = true

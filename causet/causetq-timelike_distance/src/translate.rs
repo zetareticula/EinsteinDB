@@ -26,8 +26,12 @@ use causetq_allegrosql::util::{
     Either,
 };
 
-use causetq::*::{
+use edb_causetq_allegrosql::{
     Limit,
+};
+
+use edb_causetq_allegrosql::causetq_types::{
+    CausetQType,
 };
 
 use edb_causetq_parityfilter::{

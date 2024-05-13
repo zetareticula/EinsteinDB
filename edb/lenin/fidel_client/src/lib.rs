@@ -15,14 +15,23 @@ extern crate fail;
 #[allow(unused_extern_crates)]
 extern crate edb_alloc;
 #[macro_use]
-extern crate violetabftstore::interlock::;
+extern crate edb_util;
+#[macro_use]
+extern crate violetabftstore;
+#[macro_use]
+extern crate prometheus;
 
-mod client;
-pub mod metrics;
-mod util;
+use std::fmt;
+use std::sync::Arc;
 
-mod config;
-pub mod errors;
+// mod client;
+// pub mod metrics;
+// mod util;
+//
+// mod config;
+// pub mod errors;
+// pub mod metrics_flusher;
+
 pub use self::client::{DummyFidelClient, RpcClient};
 pub use self::config::Config;
 pub use self::errors::{Error, Result};
@@ -37,8 +46,10 @@ use ekvproto::meta_timeshare;
 use ekvproto::fidel_timeshare;
 use ekvproto::replication_mode_timeshare::{BraneReplicationStatus, ReplicationStatus};
 use semver::{SemVerError, Version};
-use violetabftstore::interlock::::time::UnixSecs;
 use txn_types::TimeStamp;
+
+use edb_util::UnixSecs;
+
 
 pub type Key = Vec<u8>;
 pub type FidelFuture<T> = BoxFuture<'static, Result<T>>;

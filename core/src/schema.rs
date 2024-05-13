@@ -39,8 +39,20 @@ use spacetime::{
     AttributeAlteration,
 };
 
+
+/// A trait for validating attributes.
+/// This is used when we're building a new schemaReplicant or altering an existing one.
+/// We want to ensure that the schemaReplicant is valid before we install it.
+/// This is a trait so that we can implement it for both `Attribute` and `AttributeBuilder`.
+///
+
+/// The `causetid` function is used to provide a human-readable representation of the attribute's
 pub trait AttributeValidation {
+
+/// Validate the attribute.
     fn validate<F>(&self, causetid: F) -> Result<()> where F: Fn() -> String;
+
+
 }
 
 impl AttributeValidation for Attribute {
@@ -77,6 +89,9 @@ fn validate_attribute_map(causetid_map: &SolitonIdMap, attribute_map: &Attribute
     Ok(())
 }
 
+
+/// A builder for attributes.
+
 #[derive(Clone,Debug,Default,Eq,Hash,Ord,PartialOrd,PartialEq)]
 pub struct AttributeBuilder {
     helpful: bool,
@@ -89,9 +104,18 @@ pub struct AttributeBuilder {
     pub no_history: Option<bool>,
 }
 
+
+
+
 impl AttributeBuilder {
     /// Make a new AttributeBuilder for human consumption: it will help you
     /// by flipping relevant flags.
+    ///
+
+
+
+
+
     pub fn helpful() -> Self {
         AttributeBuilder {
             helpful: true,
@@ -109,6 +133,9 @@ impl AttributeBuilder {
         ab
     }
 
+
+
+
     pub fn value_type<'a>(&'a mut self, value_type: MinkowskiValueType) -> &'a mut Self {
         self.value_type = Some(value_type);
         self
@@ -117,6 +144,83 @@ impl AttributeBuilder {
     pub fn multival<'a>(&'a mut self, multival: bool) -> &'a mut Self {
         self.multival = Some(multival);
         self
+    }
+
+    pub fn non_unique<'a>(&'a mut self) -> &'a mut Self {
+        self.unique = Some(None);
+        self
+    }
+
+    pub fn unique<'a>(&'a mut self, unique: attribute::Unique) -> &'a mut Self {
+        if self.helpful && unique == attribute::Unique::CausetIdity {
+            self.index = Some(true);
+        }
+        self.unique = Some(Some(unique));
+        self
+    }
+
+    pub fn index<'a>(&'a mut self, index: bool) -> &'a mut Self {
+        self.index = Some(index);
+        self
+    }
+
+    pub fn fulltext<'a>(&'a mut self, fulltext: bool) -> &'a mut Self {
+        self.fulltext = Some(fulltext);
+        if self.helpful && fulltext {
+            self.index = Some(true);
+        }
+        self
+    }
+
+    pub fn component<'a>(&'a mut self, component: bool) -> &'a mut Self {
+        self.component = Some(component);
+        self
+    }
+
+    pub fn no_history<'a>(&'a mut self, no_history: bool) -> &'a mut Self {
+        self.no_history = Some(no_history);
+        self
+    }
+
+    pub fn validate_install_attribute(&self) -> Result<()> {
+        if self.value_type.is_none() {
+            bail!(DbErrorKind::BadSchemaReplicantAssertion("SchemaReplicant attribute for new attribute does not set :edb/valueType".into()));
+        }
+        Ok(())
+    }
+
+    pub fn validate_alter_attribute(&self) -> Result<()> {
+        if self.value_type.is_some() {
+
+            bail!(DbErrorKind::BadSchemaReplicantAssertion("SchemaReplicant alteration must not set :edb/valueType".into()));
+        }
+        if self.fulltext.is_some() {
+            bail!(DbErrorKind::BadSchemaReplicantAssertion("SchemaReplicant alteration must not set :edb/fulltext".into()));
+        }
+        Ok(())
+    }
+
+    pub fn build(&self) -> Attribute {
+        let mut attribute = Attribute::default();
+        if let Some(value_type) = self.value_type {
+            attribute.value_type = value_type;
+        }
+        if let Some(fulltext) = self.fulltext {
+            attribute.fulltext = fulltext;
+        }
+        if let Some(multival) = self.multival {
+            attribute.multival = multival;
+        }
+        if let Some(ref unique) = self.unique {
+            attribute.unique = unique.clone();
+        }
+        if let Some(index) = self.index {
+            attribute.index = index;
+        }
+
+        if let Some(component) = self.component {
+            attribute.component = component;
+        }
     }
 
     pub fn non_unique<'a>(&'a mut self) -> &'a mut Self {
@@ -513,3 +617,5 @@ mod test {
         assert_eq!(err, Some(DbErrorKind::BadSchemaReplicantAssertion(":edb/fulltext true without :edb/valueType :edb.type/string for solitonId: :foo/bar".into())));
     }
 }
+
+

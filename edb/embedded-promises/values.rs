@@ -10,12 +10,15 @@
 
 #![allow(dead_code)]
 
+
 /// Literal `Value` instances in the the "edb" namespace.
 ///
 /// Used through-out the transactor to match allegro EDB constructs.
 
 use edbn::types::Value;
 use edbn::symbols;
+
+
 
 /// Declare a lazy static `causetid` of type `Value::Keyword` with the given `namespace` and
 /// `name`.

@@ -1,6 +1,8 @@
 [package]
 name = "fidel_timeshare_helper"
+description = "Fidel Timeshare Helper"
 version = "0.0.1"
+authors = ["ZetaReticula"]
 edition = "2018"
 publish = false
 
@@ -8,6 +10,7 @@ publish = false
 protobuf-codec = [
   "milevadb_query_datatype/protobuf-codec",
   "fidel_timeshare/protobuf-codec"
+
 ]
 prost-codec = [
   "milevadb_query_datatype/prost-codec",
@@ -18,3 +21,15 @@ prost-codec = [
 codec = { path = "../codec" }
 milevadb_query_datatype = { path = "../milevadb_query_datatype" }
 fidel_timeshare = { git = "https://github.com/whtcorpsinc/fidel_timeshare.git", default-features = false }
+prost = { version = "0.7", default-features = false }
+prost-types = { version = "0.7", default-features = false }
+prost-derive = { version = "0.7", default-features = false }
+prost-build = { version = "0.7", default-features = false }
+
+
+
+[build-dependencies]
+prost-build = { version = "0.7", default-features = false }
+
+
+

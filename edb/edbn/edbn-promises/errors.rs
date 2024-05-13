@@ -299,3 +299,42 @@ pub enum DbErrorKind {
     #[fail(display = "SQL error: {}", _0)]
     RusqliteError(String),
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display_schemaReplicant_constraint_violation() {
+        let upserts = btreemap! {
+            42 => btreeset!{ 100, 101 },
+            43 => btreeset!{ 102, 103 },
+        };
+        let type_disagreements = btreemap! {
+            (100, 200, MinkowskiType::Ref) => MinkowskiValueType::Boolean,
+            (101, 201, MinkowskiType::Ref) => MinkowskiValueType::Boolean,
+        };
+        let cardinality_conflicts = vec![
+            CardinalityConflict::CardinalityOneAddConflict {
+                e: 200,
+                a: 201,
+                vs: btreeset!{ MinkowskiType::Ref, MinkowskiType::Boolean },
+            },
+            CardinalityConflict::AddRetractConflict {
+                e: 202,
+                a: 203,
+                vs: btreeset!{ MinkowskiType::Ref, MinkowskiType::Boolean },
+            },
+        ];
+        let violation = SchemaReplicantConstraintViolation::ConflictingUpserts { conflicting_upserts: upserts.clone() };
+        assert_eq!(format!("{}", violation), "conflicting upserts:\n  tempid 42 upserts to {100, 101}\n  tempid 43 upserts to {102, 103}\n");
+        let violation = SchemaReplicantConstraintViolation::TypeDisagreements { conflicting_Causets: type_disagreements.clone() };
+        assert_eq!(format!("{}", violation), "type disagreements:\n  expected value of type Boolean but got Causet [100 200 Ref]\n  expected value of type Boolean but got Causet [101 201 Ref]\n");
+        let violation = SchemaReplicantConstraintViolation::CardinalityConflicts { conflicts: cardinality_conflicts.clone() };
+        assert_eq!(format!("{}", violation), "cardinality conflicts:\n  CardinalityOneAddConflict { e: 200, a: 201, vs: {Boolean, Ref} }\n  AddRetractConflict { e: 202, a: 203, vs: {Boolean, Ref} }\n");
+    }
+}
+
+
+// Path: edb/edbn/edbn-promises/errors.rs

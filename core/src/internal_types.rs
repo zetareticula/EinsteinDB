@@ -166,6 +166,11 @@ pub enum LookupRefOrTempId {
     TempId(TempIdHandle)
 }
 
+
+pub type TempIdMap = HashMap<TempIdHandle, KnownSolitonId>;
+
+
+
 pub type TermWithTempIdsAndLookupRefs = Term<KnownSolitonIdOr<LookupRefOrTempId>, MinkowskiTypeOr<LookupRefOrTempId>>;
 pub type TermWithTempIds = Term<KnownSolitonIdOr<TempIdHandle>, MinkowskiTypeOr<TempIdHandle>>;
 pub type TermWithoutTempIds = Term<KnownSolitonId, MinkowskiType>;
@@ -224,3 +229,24 @@ pub(crate) struct AddAndRetract {
 // A trie-like structure mapping a -> e -> v that prefix compresses and makes uniqueness constraint
 // checking more efficient.  BTree* for deterministic errors.
 pub(crate) type AEVTrie<'schemaReplicant> = BTreeMap<(SolitonId, &'schemaReplicant Attribute), BTreeMap<SolitonId, AddAndRetract>>;
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_replace_lookup_ref() {
+        let mut lookup_map = AVMap::default();
+        lookup_map.insert(AVPair::new(1, 2), 3);
+        lookup_map.insert(AVPair::new(4, 5), 6);
+
+        let lift = |x| x + 100;
+
+        assert_eq!(replace_lookup_ref(&lookup_map, Left(10), lift), Ok(Left(10)));
+        assert_eq!(replace_lookup_ref(&lookup_map, Right(LookupRefOrTempId::TempId(10.into())), lift), Ok(Right(10.into())));
+        assert_eq!(replace_lookup_ref(&lookup_map, Right(LookupRefOrTempId::LookupRef(AVPair::new(1, 2).into())), lift), Ok(Left(103)));
+        assert_eq!(replace_lookup_ref(&lookup_map, Right(LookupRefOrTempId::LookupRef(AVPair::new(4, 5).into())), lift), Ok(Left(106)));
+        assert_eq!(replace_lookup_ref(&lookup_map, Right(LookupRefOrTempId::LookupRef(AVPair::new(7, 8).into())), lift), Err(DbErrorKind::UnrecognizedCausetId("couldn't lookup [a v]: {:7 8}".to_string()).into()));
+    }
+}
