@@ -4,6 +4,12 @@
 //!
 //! This crate define an abstraction of external causet_storage. Currently, it
 //! supports local causet_storage.
+//!
+
+#![feature(async_await)]
+#![feature(async_closure)]
+#![feature(await_macro)]
+#![feature(pin)]
 
 #[macro_use]
 extern crate slog_global;
@@ -22,16 +28,18 @@ use ekvproto::backup::StorageBacklightlike_oneof_backlightlike as Backlightlike;
 use ekvproto::backup::{causet_storage_backlightlike::Backlightlike, Local};
 use ekvproto::backup::{Gcs, Noop, StorageBacklightlike, S3};
 
-mod local;
-pub use local::LocalStorage;
-mod noop;
-pub use noop::NoopStorage;
-mod s3;
-pub use s3::S3Storage;
-mod gcs;
-pub use gcs::GCSStorage;
-mod util;
-pub use util::block_on_external_io;
+
+
+// mod local;
+// pub use local::LocalStorage;
+// mod noop;
+// pub use noop::NoopStorage;
+// mod s3;
+// pub use s3::S3Storage;
+// mod gcs;
+// pub use gcs::GCSStorage;
+// mod util;
+// pub use util::block_on_external_io;
 
 pub const READ_BUF_SIZE: usize = 1024 * 1024 * 2;
 

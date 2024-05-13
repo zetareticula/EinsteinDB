@@ -5,6 +5,5 @@ authors = ["EinsteinDB Project Authors"]
 edition = "2021"
 description = "EinsteinDB Traits for FoundationDB Record Layer"
 license = "MIT"
-copyright = "Copyright (c) 2020-2021 EinsteinDB Project Authors"
-url = "https://github.com/YosiSF/EinsteinDB"
+
 

@@ -5,6 +5,12 @@ use crate::errors::Result;
 use crate::iterable::Iterable;
 use std::path::PathBuf;
 
+/// SstExt is a trait that provides the ability to read and write SST files.
+/// It is used to abstract the underlying storage engine.
+/// For example, in RocksDB, it is implemented for DB.
+/// In EinsteinDB, it is implemented for EinsteinDB.
+/// In tests, it is implemented for MemSST.
+
 pub trait SstExt: Sized {
     type SstReader: SstReader;
     type SstWriter: SstWriter;

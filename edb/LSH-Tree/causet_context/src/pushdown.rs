@@ -6,6 +6,10 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 
+#[causet(not(feature = "prost-codec"))]
+
+
+
 use crossbeam::atomic::AtomicCell;
 #[causet(feature = "prost-codec")]
 use ekvproto::causet_context_timeshare::{

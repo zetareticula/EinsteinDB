@@ -1,5 +1,5 @@
 [package]
-name = "engine_panic"
+name = "edb_panic"
 version = "0.0.1"
 description = "An example EinsteinDB causet_storage engine that does nothing but panic"
 edition = "2018"
@@ -8,5 +8,56 @@ publish = false
 [dependencies]
 edb = { path = "../edb" }
 edb_alloc = { path = "../edb_alloc" }
-# FIXME: Remove this dep from the edb interface
-violetabftstore::interlock:: = { path = "../violetabftstore::interlock::" }
+edb_traits = { path = "../edb_traits" }
+edb_util = { path = "../edb_util" }
+futures = "0.1"
+futures-preview = "0.3"
+log = "0.4"
+log4rs = "0.8"
+rand = "0.6"
+tokio = "0.1"
+tokio-threadpool = "0.1"
+tokio-timer = "0.2"
+tokio-timer-preview = "0.2"
+
+[dev-dependencies]
+quickcheck = "0.8"
+
+[features]
+default = ["edb", "edb_alloc", "edb_traits", "edb_util", "futures", "log", "log4rs", "rand", "tokio", "tokio-threadpool", "tokio-timer", "tokio-timer-preview"]
+
+[workspace]
+members = [
+    "edb",
+    "edb_alloc",
+    "edb_panic",
+    "edb_traits",
+    "edb_util",
+    "edb-server",
+    "edb-server-internal",
+    "edb-server-internal-api",
+    "edb-server-internal-causet_storage",
+    "edb-server-internal-causet_storage_engine",
+    "edb-server-internal-causet_storage_engine_alike",
+    "edb-server-internal-causet_storage_engine_alike::edb",
+    "edb-server-internal-causet_storage_engine_alike::edb_alloc",
+    "edb-server-internal-causet_storage_engine_alike::edb_traits",
+    "edb-server-internal-causet_storage_engine_alike::edb_util",
+    "edb-server-internal-causet_storage_engine_alike::futures",
+    "edb-server-internal-causet_storage_engine_alike::log",
+    "edb-server-internal-causet_storage_engine_alike::log4rs",
+    "edb-server-internal-causet_storage_engine_alike::rand",
+    "edb-server-internal-causet_storage_engine_alike::tokio",
+    "edb-server-internal-causet_storage_engine_alike::tokio-threadpool",
+    "edb-server-internal-causet_storage_engine_alike::tokio-timer",
+    "edb-server-internal-causet_storage_engine_alike::tokio-timer-preview",
+    "edb-server-internal-causet_storage_engine_alike::edb-server",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal-api",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal-causet_storage",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal-causet_storage_engine",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal-causet_storage_engine_alike",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal-causet_storage_engine_alike::edb",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal-causet_storage_engine_alike::edb_alloc",
+    "edb-server-internal-causet_storage_engine_alike::edb-server-internal-causet_storage_engine_alike::edb_traits",
+]
