@@ -11,8 +11,8 @@ use error_code::{self, ErrorCode, ErrorCodeExt};
 use futures::channel::oneshot::Canceled;
 use grpcio::Error as GrpcError;
 use ekvproto::import_sst_timeshare;
-use violetabftstore::interlock::::codec::Error as CodecError;
 use uuid::Error as UuidError;
+
 
 use crate::metrics::*;
 
@@ -152,3 +152,6 @@ impl ErrorCodeExt for Error {
         }
     }
 }
+
+
+

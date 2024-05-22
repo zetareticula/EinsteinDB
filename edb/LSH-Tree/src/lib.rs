@@ -87,11 +87,13 @@ use causetq_allegrosql::{
 
 use einstein_db::immuBlock_memTcam;
 
-use causetq::*::{
-    NamedPullAttribute,
+use causetq_pull_promises::{
     PullAttributeSpec,
     PullConcreteAttribute,
+    NamedPullAttribute,
 };
+
+
 
 use causetq_pull_promises::errors::{
     PullError,

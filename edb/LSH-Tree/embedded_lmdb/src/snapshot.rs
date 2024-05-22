@@ -12,10 +12,15 @@ use crate::options::LmdbReadOptions;
 use crate::util::get_causet_handle;
 use crate::LmdbEngineIterator;
 
+use super::LmdbEngine;
+
+#[derive(Clone)]
 pub struct LmdbSnapshot {
     db: Arc<DB>,
     snap: UnsafeSnap,
+
 }
+
 
 unsafe impl lightlike for LmdbSnapshot {}
 unsafe impl Sync for LmdbSnapshot {}

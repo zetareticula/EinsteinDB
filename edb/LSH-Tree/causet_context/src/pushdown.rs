@@ -4,7 +4,31 @@ use std::cell::RefCell;
 use std::mem;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
+use std::mem;
+use std::rc::Rc;
+use std::cell::RefCell;
+
+
+use futures::channel::mpsc::UnboundedSender;
+use futures::sink::SinkExt;
+
+
+use ekvproto::causet_context_timeshare::{
+    event::{
+        Evcausetidx::OpType as EventEventOpType, Entries as EventEntries, Event as Event_oneof_event,
+        LogType as EventLogType, Event as EventEvent,
+    },
+    Compatibility, DuplicateRequest as ErrorDuplicateRequest, Error as EventError, Event,
+};
+
+
+use ekvproto::error_timeshare;
+
+
 
 #[causet(not(feature = "prost-codec"))]
 
@@ -34,8 +58,6 @@ use violetabftstore::store::util::compare_brane_epoch;
 use violetabftstore::Error as VioletaBftStoreError;
 use resolved_ts::Resolver;
 use edb::causet_storage::txn::TxnEntry;
-use violetabftstore::interlock::::collections::HashMap;
-use violetabftstore::interlock::::mpsc::batch::lightlikeer as Batchlightlikeer;
 use txn_types::{Key, Dagger, LockType, TimeStamp, WriteRef, WriteType};
 
 use crate::lightlikepoint::{OldValueCache, OldValueCallback};
@@ -778,7 +800,6 @@ mod tests {
     use ekvproto::meta_timeshare::Brane;
     use std::cell::Cell;
     use edb::causet_storage::tail_pointer::test_util::*;
-    use violetabftstore::interlock::::mpsc::batch::{self, BatchReceiver, VecCollector};
 
     #[test]
     fn test_error() {
@@ -1015,3 +1036,113 @@ mod tests {
         pushdown_causet.on_brane_ready(resolver, brane);
     }
 }
+
+#[causet(test)]
+mod bench {
+    use super::*;
+    use test::Bencher;
+
+    #[bench]
+    fn bench_sink_data(b: &mut Bencher) {
+        let mut pushdown_causet = pushdown_causet::new(1);
+        let mut resolver = Resolver::new(1);
+        resolver.init();
+        let mut brane = Brane::default();
+        brane.set_id(1);
+        let mut downstream = Downstream::new(String::new(), brane.get_brane_epoch().clone(), 1, ConnID::new());
+        pushdown_causet.subscribe(downstream);
+        for downstream in pushdown_causet.on_brane_ready(resolver, brane) {
+            pushdown_causet.subscribe(downstream);
+        }
+        let mut old_value_cb = Rc::new(RefCell::new(|_| Ok(None)));
+        let mut old_value_cache = OldValueCache::default();
+        let requests = vec![
+            Request::new(1, Cmd::Put(PutRequest::default())),
+            Request::new(2, Cmd::Put(PutRequest::default())),
+            Request::new(3, Cmd::Put(PutRequest::default())),
+            Request::new(4, Cmd::Put(PutRequest::default())),
+            Request::new(5, Cmd::Put(PutRequest::default())),
+        ];
+        b.iter(|| {
+            pushdown_causet
+                .sink_data(1, requests.clone(), old_value_cb.clone(), &mut old_value_cache)
+                .unwrap();
+        });
+    }
+}
+
+#[causet(test)]
+mod tests {
+    use super::*;
+    use futures::executor::block_on;
+    use futures::stream::StreamExt;
+    use ekvproto::error_timeshare::Error as ErrorHeader;
+    use ekvproto::meta_timeshare::Brane;
+    use std::cell::Cell;
+    use edb::causet_storage::tail_pointer::test_util::*;
+    use violetabftstore::interlock::::mpsc::batch::{self, BatchReceiver, VecCollector};
+
+    #[test]
+    fn test_error() {
+        let brane_id = 1;
+        let mut brane = Brane::default();
+        brane.set_id(brane_id);
+        brane.mut_peers().push(Default::default());
+        brane.mut_brane_epoch().set_version(2);
+        brane.mut_brane_epoch().set_conf_ver(2);
+        let brane_epoch = brane.get_brane_epoch().clone();
+
+        let (sink, rx) = batch::unbounded(1);
+        let rx = BatchReceiver::new(rx, 1, Vec::new, VecCollector);
+        let request_id = 123;
+        let mut downstream =
+            Downstream::new(String::new(), brane_epoch, request_id, ConnID::new());
+        downstream.set_sink(sink);
+        let mut pushdown_causet = pushdown_causet::new(brane_id);
+        pushdown_causet.subscribe(downstream);
+        let enabled = pushdown_causet.enabled();
+        assert!(enabled.load(Ordering::SeqCst));
+        let mut resolver = Resolver::new(brane_id);
+        resolver.init();
+        for downstream in pushdown_causet.on_brane_ready(resolver, brane) {
+            pushdown_causet.subscribe(downstream);
+        }
+
+        let rx_wrap = Cell::new(Some(rx));
+        let receive_error = || {
+            let (resps, rx) = block_on(rx_wrap.replace(None).unwrap().into_future());
+            rx_wrap.set(Some(rx));
+            let mut resps = resps.unwrap();
+            assert_eq!(resps.len(), 1);
+            for r in &resps {
+                if let causet_contextEvent::Event(e) = r {
+                    assert_eq!(e.get_request_id(), request_id);
+                }
+            }
+            let causet_context_event = &mut resps[0];
+            if let causet_contextEvent:: Event(e) = causet_context_event {
+                let event = e.event.take().unwrap();
+                match event {
+                    Event_oneof_event::Error(err) => err,
+                    other => panic!("unknown event {:?}", other),
+                }
+            } else {
+                panic!("unknown event")
+            }
+
+        };
+
+        let mut err_header = ErrorHeader::default();
+
+        err_header.set_not_leader(Default::default());
+
+        pushdown_causet.stop(Error::Request(err_header));
+
+        let err = receive_error();
+
+        assert!(err.has_not_leader());
+
+        // Enable is disabled by any error.
+        assert!(!enabled.load(Ordering::SeqCst));
+
+        let mut err_header = ErrorHeader::default();

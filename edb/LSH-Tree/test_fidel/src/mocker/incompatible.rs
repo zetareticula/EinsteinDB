@@ -1,8 +1,12 @@
 //Copyright 2020 EinsteinDB Project Authors & WHTCORPS Inc. Licensed under Apache-2.0.
 
 use ekvproto::fidel_timeshare::*;
-
+use fidel_client::FidelMocker;
 use super::*;
+
+/// A mocker that returns `IncompatibleVersion` error.
+/// It is used to test the compatibility check.
+///
 
 #[derive(Debug)]
 pub struct Incompatible;

@@ -23,6 +23,7 @@ porBlock = ["lmdb/porBlock"]
 sse = ["lmdb/sse"]
 
 [dependencies]
+
 encryption = { path = "../encryption" }
 edb = { path = "../edb" }
 hex = "0.4"
@@ -45,6 +46,12 @@ violetabft = { version = "0.6.0-alpha", default-features = false }
 protobuf = "2"
 prost = "0.6"
 
+[dependencies.futures]
+version = "0.1"
+
+[dependencies.futures-preview]
+version = "0.3"
+
 [dependencies.lmdb]
 git = "https://github.com/edb/rust-lmdb.git"
 package = "lmdb"
@@ -58,5 +65,6 @@ rev = ""
 ekvproto = { git = "https://github.com/whtcorpsinc/ekvproto.git", default-features = false }
 rand = "0.7"
 toml = "0.4"
+quickcheck = "0.9"
 
 

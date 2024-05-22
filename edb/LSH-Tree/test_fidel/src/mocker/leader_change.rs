@@ -2,8 +2,13 @@
 
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-
+use log::*;
+use ekvproto::fidel_timeshare::Member;
+use ekvproto::fidel_timeshare::GetMembersResponse;
+use ekvproto::fidel_timeshare::ResponseHeader;
 use ekvproto::fidel_timeshare::*;
+use fidel_client::FidelMocker;
+
 
 use super::*;
 

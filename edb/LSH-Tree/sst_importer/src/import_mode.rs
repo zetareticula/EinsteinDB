@@ -8,10 +8,23 @@ use allegrosql_promises::{PrimaryCausetNetworkOptions, DBOptions, Txnallegro};
 use futures::executor::ThreadPool;
 use futures_util::compat::Future01CompatExt;
 use eTxnproto::import_sst_timeshare::*;
-use violetabftstore::interlock::::timer::GLOBAL_TIMER_HANDLE;
 
 use super::Config;
 use super::Result;
+
+pub mod metrics;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SwitchMode {
+    Normal,
+    Import,
+}
+
+pub struct ImportModeSwitcher<E: Txnallegro> {
+    inner: Arc<Mutex<ImportModeSwitcherInner<E>>>,
+}
+
+
 
 type LmdbDBMetricsFn = fn(causet: &str, name: &str, v: f64);
 

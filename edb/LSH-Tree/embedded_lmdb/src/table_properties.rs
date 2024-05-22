@@ -12,6 +12,7 @@ use edb::{BlockPropertiesCollection, BlockPropertiesExt};
 use lmdb::Block_properties_rc as raw;
 use std::ops::Deref;
 
+
 impl BlockPropertiesExt for LmdbEngine {
     type BlockPropertiesCollection = LmdbBlockPropertiesCollection;
     type BlockPropertiesCollectionIter = LmdbBlockPropertiesCollectionIter;
