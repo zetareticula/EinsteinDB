@@ -1,14 +1,43 @@
 // Copyright 2019 WHTCORPS INC Project Authors. Licensed under Apache-2.0.
-
-use milevadb_query_common::interlock::{
-    IntervalCone, OwnedKvPair, PointCone, Result as QEResult, interlock,
-};
+// Copyright 2024 EINSTAI INC WHTCORPS INC Project Authors. Licensed under Apache-2.0.
 
 use crate::interlock::Error;
 use crate::interlock::tail_pointer::NewerTsCheckState;
 use crate::interlock::Statistics;
 use crate::interlock::{Scanner, CausetStore};
 use txn_types::Key;
+use milevadb_query_common::interlock::interlock;
+
+use std::collections::BTreeMap;
+use std::sync::Arc;
+
+use milevadb_query_common::interlock::Error;
+use milevadb_query_common::interlock::Result as QEResult;
+use milevadb_query_common::interlock::Statistics;
+use milevadb_query_common::interlock::Storage;
+
+use crate::interlock::causet_storage::CausetStorage;
+use crate::interlock::causet_storage::CausetStorageStatistics;
+
+/// A `Storage` implementation over EinsteinDB's interlock.
+/// It supports point and range queries.
+/// It does not support batch point queries.
+/// It does not support streaming.
+/// 
+/// 
+
+pub struct EinsteinDBStorage {
+    causet_storage: CausetStorage,
+    causet_stats_backlog: Statistics,
+}
+
+
+use milevadb_query_common::interlock::{
+    IntervalCone, OwnedKvPair, PointCone, Result as QEResult, interlock, Statistics, Storage, CausetId, CausetsCausetIndex, Attribute,
+
+};
+
+
 
 /// A `interlock` implementation over EinsteinDB's interlock.
 pub struct EinsteinDBStorage<S: CausetStore> {
@@ -32,6 +61,49 @@ impl<S: CausetStore> EinsteinDBStorage<S> {
         }
     }
 }
+
+
+impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
+    type Statistics = Statistics;
+
+    fn begin_scan(
+        &mut self,
+        is_backward_scan: bool,
+        is_key_only: bool,
+        cone: IntervalCone,
+    ) -> QEResult<()> {
+        if let Some(scanner) = &mut self.scanner {
+            self.causet_stats_backlog.add(&scanner.take_statistics());
+            if scanner.met_newer_ts_data() == NewerTsCheckState::Met {
+                // always override if we met newer ts data
+                self.met_newer_ts_data_backlog = NewerTsCheckState::Met;
+            }
+        }
+        let lower = Some(Key::from_raw(&cone.lower_inclusive));
+        let upper = Some(Key::from_raw(&cone.upper_exclusive));
+        self.scanner = Some(
+            self.store
+                .scanner(
+                    is_backward_scan,
+                    is_key_only,
+                    self.met_newer_ts_data_backlog == NewerTsCheckState::NotMetYet,
+                    lower,
+                    upper,
+                )
+                .map_err(Error::from)?,
+            // There is no transform from interlock error to QE's StorageError,
+            // so an intermediate error is needed.
+        );
+        Ok(())
+    }
+
+    fn scan_next(&mut self) -> QEResult<Option<OwnedKvPair>> {
+        // Unwrap is fine because we must have called `reset_cone` before calling `scan_next`.
+        let kv = self.scanner.as_mut().unwrap().next().map_err(Error::from)?;
+        Ok(kv.map(|(k, v)| (k.into_raw().unwrap(), v)))
+    }
+
+    fn get(&mut self, _is_key_only: bool, cone: PointCone) -> QEResult<Option<OwnedKvPair>> {
 
 impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
     type Statistics = Statistics;

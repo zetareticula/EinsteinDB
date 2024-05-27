@@ -127,7 +127,7 @@ impl<S: causet_storage, I: ScanFreeDaemonImpl> ScanFreeDaemon<S, I> {
 }
 
 /// Extracts `FieldType` from `PrimaryCausetInfo`.
-// TODO: Embed FieldType in PrimaryCausetInfo directly in Cop DAG v2 to remove this function.
+// TODO: Embed FieldType in PrimaryCausetInfo directly in Interlock DAG v2 to remove this function.
 pub fn field_type_from_PrimaryCauset_info(ci: &PrimaryCausetInfo) -> FieldType {
     let mut field_type = FieldType::default();
     field_type.set_tp(ci.get_tp());

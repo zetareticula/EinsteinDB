@@ -1,6 +1,7 @@
 use snafu::Snafu;
 use std::{borrow::Cow, ops::RangeInclusive};
 
+
 /// Length constraints for a database name.
 ///
 /// A `RangeInclusive` is a closed interval, covering [1, 64]

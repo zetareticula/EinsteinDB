@@ -1,9 +1,16 @@
 //Copyright 2020 EinsteinDB Project Authors & WHTCORPS Inc. Licensed under Apache-2.0.
 
+
+use failure::Fail;
+
+
 use crate::causet_storage;
 use crate::causet_storage::kv::{Error as KvError, ErrorInner as KvErrorInner};
 use crate::causet_storage::tail_pointer::{Error as MvccError, ErrorInner as MvccErrorInner};
 use crate::causet_storage::txn::{Error as TxnError, ErrorInner as TxnErrorInner};
+
+
+
 
 use error_code::{self, ErrorCode, ErrorCodeExt};
 
