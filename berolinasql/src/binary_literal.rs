@@ -20,8 +20,19 @@ use std::str::FromStr;
 use std::ops::{Deref, DerefMut};
 use std::iter::{self, FromIterator};
 
+use hex;
+use codec::Error;
+use codec::Result;
+use codec::number::NumberEncoder;
+use codec::number::NumberDecoder;
+
+use super::EvalContext;
 
 
+
+/// `BinaryLiteral` is a wrapper for `Vec<u8>`, which is used to represent binary literals.
+/// It is used in `ScalarValue` to represent binary values.
+/// `BinaryLiteral` is used to represent bit literals, hex literals and binary literals.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct BinaryLiteral(pub [u8; 8]);
 
@@ -42,6 +53,41 @@ pub fn to_uint(literal: &BinaryLiteral) -> u64 {
         i += 1;
     }
     result
+}
+
+impl Display for BinaryLiteral {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "0x{}", hex::encode(&self.0))
+    }
+}
+
+impl FromStr for BinaryLiteral {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<BinaryLiteral> {
+        let trimmed = if s.starts_with("0x") {
+            s.trim_start_matches("0x")
+        } else {
+            return Err(box_err!("invalid hexadecimal format: {}", s));
+        };
+        if trimmed.is_empty() {
+            return Ok(BinaryLiteral(vec![]));
+        }
+        let v = if trimmed.len() % 2 != 0 {
+            let mut head = vec![b'0'];
+            head.extend(trimmed.as_bytes());
+            box_try!(hex::decode(head))
+        } else {
+            box_try!(hex::decode(trimmed.as_bytes()))
+        };
+        Ok(BinaryLiteral(v))
+    }
+}
+
+impl From<BinaryLiteral> for Vec<u8> {
+    fn from(literal: BinaryLiteral) -> Vec<u8> {
+        literal.0
+    }
 }
 
 impl BinaryLiteral {

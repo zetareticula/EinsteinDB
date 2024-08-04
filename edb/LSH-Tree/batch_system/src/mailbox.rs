@@ -4,7 +4,10 @@ use crate::fsm::{Fsm, FsmInterlock_Semaphore, FsmState};
 use crossbeam::channel::{lightlikeError, TrylightlikeError};
 use std::borrow::Cow;
 use std::sync::Arc;
-use violetabftstore::interlock::::mpsc;
+use crossbeam::channel as mpsc;
+
+
+
 
 /// A basic mailbox.
 ///

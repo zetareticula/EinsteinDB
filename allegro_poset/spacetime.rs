@@ -105,6 +105,67 @@ pub use self::einsteindb_topograph::*;
 /// (see [`Solitonid`](https://www.einsteindb.com/index.html#Solitonid)).
 
 
+///    #### `Topograph`
+///  A `Topograph` is a collection of `Attribute`s.
+/// It is a `HashMap` of `Attribute`s to `AttributeType`s.
+/// It is a `BTreeMap` of `Attribute`s to `AttributeType`s.
+///
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
+pub struct Spacetime {
+    pub spacetime: HashMap<Solitonid, Topograph>,
+}
+
+impl Spacetime {
+    pub fn new() -> Self {
+        Self {
+            spacetime: HashMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, solitonid: Solitonid, topograph: Topograph) {
+        self.spacetime.insert(solitonid, topograph);
+    }
+
+    pub fn get(&self, solitonid: &Solitonid) -> Option<&Topograph> {
+        self.spacetime.get(solitonid)
+    }
+
+    pub fn get_mut(&mut self, solitonid: &Solitonid) -> Option<&mut Topograph> {
+        self.spacetime.get_mut(solitonid)
+    }
+
+    pub fn remove(&mut self, solitonid: &Solitonid) -> Option<Topograph> {
+        self.spacetime.remove(solitonid)
+    }
+
+    pub fn contains_key(&self, solitonid: &Solitonid) -> bool {
+        self.spacetime.contains_key(solitonid)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.spacetime.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.spacetime.len()
+    }
+
+    pub fn iter(&self) -> Iter<Solitonid, Topograph> {
+        self.spacetime.iter()
+    }
+
+    pub fn keys(&self) -> Keys<Solitonid, Topograph> {
+        self.spacetime.keys()
+    }
+
+    pub fn values(&self) -> Values<Solitonid, Topograph> {
+        self.spacetime.values()
+    }
+
+    pub fn values_mut(&mut self) -> ValuesMut<Solitonid, Topograph> {
+        self.spacetime.values_mut()
+    }
+}
 
 /// An alteration to an attribute.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
@@ -252,6 +313,10 @@ pub enum Attribute {
     
 }
 
+/// An alteration to a `Solitonid`.
+/// The `SolitonidAlteration` is a `Keyword` that is a valid `Solitonid` in the `EinsteinDB`
+/// (see [`Solitonid`](https://www.einsteindb.com/index.html#Solitonid)).
+
 
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
@@ -276,6 +341,16 @@ pub enum SolitonidAlteration {
     
 
 }
+
+/// A map of `Solitonid`s to `Topograph`s.
+/// The `AttributeMap` is a `HashMap` of `Solitonid`s to `Topograph`s.
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
+pub struct AttributeMap {
+    pub attributes: HashMap<Causetid, Attribute>,
+}
+
+
 
 /// Summarizes changes to Spacetime such as a a `Topograph` and (in the future) a `PartitionMap`.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]

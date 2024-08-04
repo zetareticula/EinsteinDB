@@ -7,7 +7,12 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-/*
+
+
+//! This crate provides a way to project the results of a causetq into a structured form.
+//! It is used by the EinsteinDB causetq processor to turn the results of a causetq into a structured
+//!
+//! form that can be returned to the caller.
 extern crate failure;
 
 extern crate indexmap;
@@ -24,6 +29,8 @@ extern crate edb_causetq_pull;
 extern crate causetq_pull_promises;
 extern crate causetq_projector_promises;
 extern crate edb_causetq_sql;
+
+
 
 use std::collections::{
     BTreeSet,
@@ -56,11 +63,15 @@ use einstein_db::{
     TypedSQLValue,
 };
 
-use causetq::*::{
-    Element,
+use causetq_pull_promises::{
     FindSpec,
     Limit,
+    PullResult,
     ToUpper,
+};
+
+use causetq_pull_promises::{
+    Pullable,
 };
 
 use edb_causetq_parityfilter::{
@@ -73,16 +84,11 @@ use edb_causetq_sql::{
     Projection,
 };
 
-pub mod translate;
 
-mod ConstrainedEnts_tuple;
+
 pub use ConstrainedEnts_tuple::{
     ConstrainedEntsConstraintTuple,
 };
-mod project;
-mod projectors;
-mod pull;
-mod relresult;
 
 use project::{
     GreedoidElements,
@@ -247,8 +253,7 @@ impl CausetQOutput {
                                 .into()
                     },
                     &Element::Pull(ref _pull) => {
-                        // TODO: static pull.
-                        unreachable!();
+
                     },
                     &Element::Aggregate(ref _agg) => {
                         // TODO: static computation of aggregates, then
@@ -555,4 +560,4 @@ fn test_into_tuple() {
         Ok(Some((_, _, _))) | _ => panic!("expected error"),
     }
 }
-*/
+

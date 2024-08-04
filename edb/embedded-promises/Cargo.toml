@@ -7,14 +7,26 @@ workspace = ".."
 name = "allegrosql_promises"
 path = "lib.rs"
 
+
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
 enum-set = "0.0.8"
 indexmap = "1"
+log = "0.4"
+num-traits = "0.2"
 ordered-float = { version = "2.0.1", features = ["serde"] }
 uuid = { version = "0.8.2", features = ["v4", "serde"] }
 serde = { version = "1.0.1", features = ["rc"] }
 serde_derive = "1.0"
+serde_json = "1.0"
+serde_repr = "0.1.6"
+serde_with = "1.6.0"
+tokio = { version = "0.2", features = ["full"] }
+tokio-allegrosql = { path = "../tokio-allegrosql" }
+tokio-serde = { path = "../tokio-serde" }
+tokio-util = { version = "0.2", features = ["full"] }
+
+
 
 [dependencies.edbn]
 path = "../edbn"

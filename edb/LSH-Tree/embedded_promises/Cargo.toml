@@ -1,5 +1,5 @@
 [package]
-name = "edb"
+name = "violetabft"
 version = "0.0.1"
 edition = "2018"
 publish = false
@@ -14,14 +14,26 @@ prost-codec = [
   "ekvproto/prost-codec",
 ]
 
+[dependencies.error_code]
+path = "../error_code"
+
+[dependencies.hex]
+version = "0.4"
+
+[dependencies.protobuf]
+version = "2"
+
+[dependencies.quick-error]
+version = "1.2.3"
+
 [dependencies]
 error_code = { path = "../error_code" }
 hex = "0.4"
 protobuf = "2"
 quick-error = "1.2.3"
 edb_alloc = { path = "../edb_alloc" }
-violetabftstore::interlock:: = { path = "../violetabftstore::interlock::" }
 slog = { version = "2.3", features = ["max_level_trace", "release_max_level_debug"] }
 slog-global = { version = "0.1", git = "https://github.com/breeswish/slog-global.git", rev = "0e23a5baff302a9d7bccd85f8f31e43339c2f2c1" }
 ekvproto = { git = "https://github.com/whtcorpsinc/ekvproto.git", default-features = false }
 violetabft = { version = "0.6.0-alpha", default-features = false }
+prost = "0.6"

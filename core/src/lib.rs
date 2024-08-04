@@ -8,6 +8,27 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+
+//! einstein_db is a library for building and interacting with EinsteinDB databases.
+//!
+//! # Examples
+//! ```
+//! use einstein_db::{
+//!    new_connection,
+//!   transact,
+//! };
+//!
+//!
+//! let conn = new_connection("").expect("Couldn't open in-memory database.");
+//!
+//!
+//! let report = transact(conn, "[{:edb/id :foo/bar}]").expect("Couldn't transact schemaReplicant.");
+//!
+//! assert_eq!(report.tx_id, 1);
+//! ```
+//!
+//! # Features
+//!
 extern crate failure;
 extern crate indexmap;
 extern crate itertools;
@@ -36,6 +57,8 @@ use causetq_pull_promises::errors::{
     DbErrorKind,
     Result,
 };
+
+
 
 #[macro_use] pub mod debug;
 

@@ -26,6 +26,7 @@ use std::time::Instant;
 use std::{thread, time};
 
 
+
 use std::sync::mpsc::{RecvError, RecvTimeoutError};
 use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc::TrySendError;
@@ -83,17 +84,32 @@ use soliton_panic::*;
 use soliton::*;
 use causetq::*;
 
+use causet_partitioner::*;
+use causet_partitioner::{CausetPartitioner, CausetPartitionerRequest, CausetPartitionerResult, CausetPartitionerContext};
+use causet_partitioner::{CausetPartitionerFactory};
 
 
+#[derive(Debug)]
+pub struct Sync {
+    pub poset: Arc<Sync>,
+}
+
+impl Sync {
+    pub fn new(poset: Arc<Sync>) -> Self {
+        Sync { poset }
+    }
+}
+
+#[derive(Debug)]
+pub struct SyncError {
+    pub kind: SyncErrorKind,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct SyncConfig {
     pub name: String,
     pub thread_count: usize,
 }
-
-
-
 
 
 #[derive(Debug)]
@@ -143,6 +159,13 @@ pub enum ErrorKind {
 
     BerolinaSQLPanic(BerolinaSQLPanicError),
     /// The underlying `EinsteinDBPanic` has failed.
+}
+
+
+impl SyncError {
+    pub fn new(kind: SyncErrorKind) -> Self {
+        SyncError { kind }
+    }
 }
 
 
@@ -197,6 +220,11 @@ impl Error {
 
 
 
+impl From<PosetError> for Error {
+    fn from(error: PosetError) -> Self {
+        Error::new(ErrorImpl::new(ErrorKind::Poset(error)))
+    }
+}
 
 
 

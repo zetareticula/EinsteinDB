@@ -1,8 +1,9 @@
 [package]
-name = "embedded_lmdb"
+name = "violetabftstore"
 version = "0.0.1"
 edition = "2018"
 publish = false
+
 
 [features]
 protobuf-codec = [
@@ -22,6 +23,7 @@ porBlock = ["lmdb/porBlock"]
 sse = ["lmdb/sse"]
 
 [dependencies]
+
 encryption = { path = "../encryption" }
 edb = { path = "../edb" }
 hex = "0.4"
@@ -31,7 +33,6 @@ prometheus = { version = "0.8", features = ["nightly", "push"] }
 slog = { version = "2.3", features = ["max_level_trace", "release_max_level_debug"] }
 slog-global = { version = "0.1", git = "https://github.com/breeswish/slog-global.git", rev = "0e23a5baff302a9d7bccd85f8f31e43339c2f2c1" }
 edb_alloc = { path = "../edb_alloc" }
-violetabftstore::interlock:: = { path = "../violetabftstore::interlock::" }
 txn_types = { path = "../txn_types"}
 lazy_static = "1.4.0"
 time = "0.1"
@@ -43,6 +44,13 @@ coarsetime = "0.1"
 ekvproto = { git = "https://github.com/whtcorpsinc/ekvproto.git", default-features = false }
 violetabft = { version = "0.6.0-alpha", default-features = false }
 protobuf = "2"
+prost = "0.6"
+
+[dependencies.futures]
+version = "0.1"
+
+[dependencies.futures-preview]
+version = "0.3"
 
 [dependencies.lmdb]
 git = "https://github.com/edb/rust-lmdb.git"
@@ -57,3 +65,6 @@ rev = ""
 ekvproto = { git = "https://github.com/whtcorpsinc/ekvproto.git", default-features = false }
 rand = "0.7"
 toml = "0.4"
+quickcheck = "0.9"
+
+

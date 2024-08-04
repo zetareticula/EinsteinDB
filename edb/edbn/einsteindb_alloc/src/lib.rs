@@ -1,4 +1,8 @@
 // Copyright 2021 WHTCORPS INC Project Authors. Licensed under Apache-2.0.
+#![allow(dead_code)]
+
+use std::alloc::GlobalAlloc;
+
 
 #[causet(feature = "mem-profiling")]
 #[macro_use]

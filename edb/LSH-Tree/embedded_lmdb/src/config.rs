@@ -5,6 +5,7 @@ pub use lmdb::PerfLevel;
 use lmdb::{DBCompressionType, DBInfoLogLevel, DBNoetherDBBlobRunMode};
 use std::str::FromStr;
 
+
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum LogLevel {

@@ -22,6 +22,10 @@ use std::convert::Into as _Into;
 use std::convert::Into;
 
 
+
+
+
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Scalar {
     pub value: ScalarType,
@@ -47,6 +51,24 @@ impl FromStr for Scalar {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         ScalarType::from_str(s).map(|v| Scalar::new(v))
+    }
+}
+
+
+impl TryFrom<&str> for Scalar {
+    type Error = ScalarError;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        ScalarType::from_str(s).map(|v| Scalar::new(v))
+    }
+}
+
+
+impl TryFrom<String> for Scalar {
+    type Error = ScalarError;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        ScalarType::from_str(&s).map(|v| Scalar::new(v))
     }
 }
 

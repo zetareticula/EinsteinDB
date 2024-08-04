@@ -288,3 +288,46 @@ pub(crate) fn bootstrap_entities() -> Vec<Instanton<edbn::ValueAndSpan>> {
     let bootstrap_entities: Vec<Instanton<edbn::ValueAndSpan>> = edbn::parse::entities(&bootstrap_assertions.to_string()).expect("bootstrap assertions");
     return bootstrap_entities;
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_bootstrap_partition_map() {
+        let partition_map = bootstrap_partition_map();
+        assert_eq!(partition_map.len(), 3);
+        assert_eq!(partition_map.get("edb.part/edb").map(|p| p.index), Some(1));
+        assert_eq!(partition_map.get("edb.part/user").map(|p| p.index), Some(USER0));
+        assert_eq!(partition_map.get("edb.part/causetx").map(|p| p.index), Some(TX0));
+    }
+
+    #[test]
+    fn test_bootstrap_causetId_map() {
+        let causetId_map = bootstrap_causetId_map();
+        assert_eq!(causetId_map.len(), 40);
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "causetid")), Some(&causetids::DB_CausetID));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.part", "edb")), Some(&causetids::DB_PART_DB));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "causecausetxInstant")), Some(&causetids::DB_TX_INSTANT));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.install", "partition")), Some(&causetids::DB_INSTALL_PARTITION));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.install", "valueType")), Some(&causetids::DB_INSTALL_VALUE_TYPE));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.install", "attribute")), Some(&causetids::DB_INSTALL_ATTRIBUTE));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "valueType")), Some(&causetids::DB_VALUE_TYPE));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "cardinality")), Some(&causetids::DB_CARDINALITY));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "unique")), Some(&causetids::DB_UNIQUE));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "isComponent")), Some(&causetids::DB_IS_COMPONENT));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "index")), Some(&causetids::DB_INDEX));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "fulltext")), Some(&causetids::DB_FULLTEXT));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "noHistory")), Some(&causetids::DB_NO_HISTORY));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "add")), Some(&causetids::DB_ADD));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "retract")), Some(&causetids::DB_RETRACT));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.part", "user")), Some(&causetids::DB_PART_USER));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.part", "causetx")), Some(&causetids::DB_PART_TX));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb", "excise")), Some(&causetids::DB_EXCISE));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.excise", "attrs")), Some(&causetids::DB_EXCISE_ATTRS));
+        assert_eq!(causetId_map.get(&ns_keyword!("edb.excise", "beforeT")), Some(&causetids::DB_EXCISE_BEFORE_T));
+    }
+}
+
+

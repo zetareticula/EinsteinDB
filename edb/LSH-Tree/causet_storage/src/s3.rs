@@ -22,6 +22,14 @@ use super::{
 };
 use ekvproto::backup::S3 as Config;
 
+/// The default part size for multipart upload.
+/// AWS S3 requires each part to be at least 5 MiB.
+/// This is the maximum part size that can be used for a multipart upload.
+const DEFAULT_PART_SIZE: usize = 1024 * 1024 * 5;
+
+
+
+
 /// S3 compatible causet_storage
 #[derive(Clone)]
 pub struct S3Storage {
@@ -67,6 +75,8 @@ impl S3Storage {
         }
         Ok(())
     }
+
+
 
     fn maybe_prefix_key(&self, key: &str) -> String {
         if !self.config.prefix.is_empty() {

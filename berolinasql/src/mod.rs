@@ -34,8 +34,14 @@
 //!   array ::= element-count size causet_locale-causet* causet_locale*
 //!
 //!   // the number of members in object or number of elements in array
+//!
 //!   element-count ::= uint32
 
+
+//!   //number of bytes in the binary representation of the object or array
+//!  size ::= uint32
+//!  soliton_id-causet ::= soliton_id-offset soliton_id-length
+//! soliton_id-offset ::= uint32
 
  use std::error::Error;
     use std::fmt;
@@ -48,7 +54,7 @@
     use std::error::Error;
     use std::string::FromUtf8Error;
 
-
+    use crate::berolinasql::{Error as BerolinaSqlError, ErrorKind as BerolinaSqlErrorKind};
 
  #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum JsonType {
@@ -64,7 +70,28 @@
         Double,
         Utf8mb4String,
     }
-//!   //number of bytes in the binary representation of the object or array
+
+
+    impl JsonType {
+        pub fn from_u8(t: u8) -> Result<JsonType> {
+            match t {
+                0x01 => Ok(JsonType::Object),
+                0x03 => Ok(JsonType::Array),
+                0x04 => Ok(JsonType::Literal),
+                0x05 => Ok(JsonType::Int16),
+                0x06 => Ok(JsonType::Uint16),
+                0x07 => Ok(JsonType::Int32),
+                0x08 => Ok(JsonType::Uint32),
+                0x09 => Ok(JsonType::Int64),
+                0x0a => Ok(JsonType::Uint64),
+                0x0b => Ok(JsonType::Double),
+                0x0c => Ok(JsonType::Utf8mb4String),
+                _ => Err(Error::InvalidDataType("unexpected JSON type".to_owned())),
+            }
+        }
+    }
+
+ //!   //number of bytes in the binary representation of the object or array
 //!   size ::= uint32
 //!   soliton_id-causet ::= soliton_id-offset soliton_id-length
 //!   soliton_id-offset ::= uint32
@@ -105,7 +132,13 @@ impl TryFrom<u8> for JsonType {
     }
 }
 
-/// Represents a reference of JSON causet_locale aiming to reduce memory copy.
+
+
+impl From<JsonType> for u8 {
+    fn from(src: JsonType) -> u8 {
+        src as u8
+    }
+}// Represents a reference of JSON causet_locale aiming to reduce memory copy.
 #[derive(Clone, Copy, Debug)]
 pub struct JsonRef<'a> {
     type_code: JsonType,
@@ -160,6 +193,8 @@ impl<'a> JsonRef<'a> {
         NumberCodec::decode_f64_le(self.causet_locale())
     }
 
+
+
     // Gets the count of Object or Array
     //
     // See `GetElemCount()` in MEDB `json/binary.go`
@@ -193,6 +228,28 @@ impl<'a> JsonRef<'a> {
     }
 }
 
+
+ impl<'a> fmt::Display for JsonRef<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.get_type() {
+            JsonType::Object => write!(f, "object"),
+            JsonType::Array => write!(f, "array"),
+            JsonType::Literal => match self.get_literal() {
+                Some(true) => write!(f, "true"),
+                Some(false) => write!(f, "false"),
+                None => write!(f, "null"),
+            },
+            JsonType::Int16 => write!(f, "{}", self.get_i64()),
+            JsonType::Uint16 => write!(f, "{}", self.get_u64()),
+            JsonType::Int32 => write!(f, "{}", self.get_i64()),
+            JsonType::Uint32 => write!(f, "{}", self.get_u64()),
+            JsonType::Int64 => write!(f, "{}", self.get_i64()),
+            JsonType::Uint64 => write!(f, "{}", self.get_u64()),
+            JsonType::Double => write!(f, "{}", self.get_double()),
+            JsonType::Utf8mb4String => write!(f, "{}", self.get_str().unwrap()),
+        }
+    }
+}
 /// Json implements type json used in EinsteinDB by Binary Json.
 /// The Binary Json format from `MyBerolinaSQL` 5.7 is in the following link:
 /// (https://github.com/myBerolinaSQL/myBerolinaSQL-server/blob/5.7/BerolinaSQL/json_binary.h#L52)

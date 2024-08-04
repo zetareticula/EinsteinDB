@@ -9,7 +9,13 @@
  // specific language governing permissions and limitations under the License.
 
 
-
+    use std::io::{self, Read, Write};
+    use std::mem;
+    use std::cmp;
+    use std::fmt;
+    use std::io::{Error, ErrorKind};
+    use std::io::{Cursor};
+    use std::io::{Seek, SeekFrom};
 
 
  use std::str;
@@ -19,6 +25,31 @@
     use std::io::{self, Read};
     use std::result::Result as StdResult;
     use std::collections::HashMap;
+
+    use regex::Regex;
+    use serde_json::Value as Json;
+
+    use crate::Result;
+
+    /// A JSON path expression.
+    /// This is a string representation of a JSON path.
+    /// It is a sequence of path legs.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PathExpression {
+    /// The path legs.
+    pub legs: Vec<PathLeg>,
+}
+
+/// A JSON path leg.
+/// This is a part of a JSON path expression.
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PathLeg {
+    /// A member of a JSON object.
+    Member(String),
+    /// An index of a JSON array.
+    Index(usize),
+}
 
  #[derive(Debug, Clone, PartialEq, Eq)]
     pub enum Error {
@@ -66,6 +97,30 @@
         InvalidValueForKeyOrMember(String, String, String)
     }
 
+
+
+ pub fn parse_json_path_expr(path_expr: &str) -> Result<PathExpression> {
+    let mut legs = vec![];
+    for leg in path_expr.split('.') {
+        if leg.is_empty() {
+            return Err(Error::MalformedPath(path_expr.to_owned()));
+        }
+        if let Some(leg) = parse_json_path_leg(leg) {
+            legs.push(leg);
+        } else {
+            return Err(Error::MalformedPath(path_expr.to_owned()));
+        }
+    }
+    Ok(PathExpression { legs })
+}
+
+    pub fn parse_json_path_leg(leg: &str) -> Option<PathLeg> {
+        if let Some(index) = leg.parse::<usize>().ok() {
+            Some(PathLeg::Index(index))
+        } else {
+            Some(PathLeg::Member(leg.to_owned()))
+        }
+    }
 
 
 
@@ -542,3 +597,41 @@ mod tests {
         }
     }
 }
+
+// Unquote a string literal.
+fn unquote_string(s: &str) -> Result<String> {
+    let mut buf = String::with_capacity(s.len());
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            match chars.next() {
+                Some('"') => buf.push('"'),
+                Some('\\') => buf.push('\\'),
+                Some('/') => buf.push('/'),
+                Some('b') => buf.push('\x08'),
+                Some('f') => buf.push('\x0c'),
+                Some('n') => buf.push('\n'),
+                Some('r') => buf.push('\r'),
+                Some('t') => buf.push('\t'),
+                Some('u') => {
+                    let mut hex = String::with_capacity(4);
+                    for _ in 0..4 {
+                        match chars.next() {
+                            Some(c) => hex.push(c),
+                            None => return Err(box_err!("Invalid JSON local_path")),
+                        }
+                    }
+                    let code = u32::from_str_radix(&hex, 16).map_err(|_| box_err!("Invalid JSON local_path"))?;
+                    buf.push(char::from_u32(code).ok_or_else(|| box_err!("Invalid JSON local_path"))?);
+                }
+                _ => return Err(box_err!("Invalid JSON local_path")),
+            }
+        } else {
+            buf.push(c);
+        }
+    }
+    Ok(buf)
+}
+
+
+

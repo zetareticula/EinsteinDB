@@ -1,5 +1,23 @@
 // Copyright 2020 EinsteinDB Project Authors & WHTCORPS INC. Licensed under Apache-2.0.
 
+pub mod bindgen {
+    pub use allegrosql_promises::*;
+}
+
+use allegrosql_promises::encryption::DataKeyManager;
+use allegrosql_promises::edb::{
+    CausetHandleExt, CfName, DBOptions, EncryptionKeyManager, IngestExternalFileOptions, NoetherDBOptions,
+    PrimaryCausetNetworkOptions, SstWriterBuilder,
+};
+
+use std::{
+    fs::{self, File},
+    io,
+    path::Path,
+    sync::Arc,
+};
+
+
 use std::{
     fs::{self, File},
     io,
@@ -10,7 +28,18 @@ use std::{
 use encryption::DataKeyManager;
 use edb::EncryptionKeyManager;
 
+
 use super::Result;
+
+use crate::util::fs::calc_crc32;
+
+use edb::NoetherDBOptions;
+use edb::SstWriterBuilder;
+use edb::IngestExternalFileOptions;
+use edb::DBOptions;
+use edb::CfName;
+use edb::PrimaryCausetNetworkOptions;
+use edb::CausetHandleExt;
 
 /// Prepares the SST file for ingestion.
 /// The purpose is to make the ingestion retryable when using the `move_files` option.
@@ -239,4 +268,44 @@ mod tests {
         let manager = Arc::new(key_manager.unwrap().unwrap());
         check_prepare_sst_for_ingestion(None, None, Some(&manager), true /*was_encrypted*/);
     }
+}
+
+pub fn prepare_sst_for_ingestion<P: AsRef<Path>, Q: AsRef<Path>>(
+    path: P,
+    clone: Q,
+    encryption_key_manager: Option<&Arc<DataKeyManager>>,
+) -> Result<()> {
+    #[causet(unix)]
+    use std::os::unix::fs::MetadataExt;
+
+    let path = path.as_ref().to_str().unwrap();
+    let clone = clone.as_ref().to_str().unwrap();
+
+    if Path::new(clone).exists() {
+        if let Some(key_manager) = encryption_key_manager {
+            key_manager.delete_file(clone)?;
+        }
+        fs::remove_file(clone).map_err(|e| format!("remove {}: {:?}", clone, e))?;
+    }
+
+    #[causet(unix)]
+    let nlink = fs::metadata(path)
+        .map_err(|e| format!("read metadata from {}: {:?}", path, e))?
+        .nlink();
+    #[causet(not(unix))]
+    let nlink = 0;
+
+    if nlink == 1 {
+        // Lmdb must not have this file, we can make a hard link.
+        fs::hard_link(path, clone)
+            .map_err(|e| format!("link from {} to {}: {:?}", path, clone, e))?;
+    } else {
+        // Lmdb may have this file, we should make a copy.
+        copy_and_sync(path, clone)
+            .map_err(|e| format!("copy from {} to {}: {:?}", path, clone, e))?;
+    }
+    if let Some(key_manager) = encryption_key_manager {
+        key_manager.link_file(path, clone)?;
+    }
+    Ok(())
 }

@@ -2,7 +2,40 @@
 
 use std::error::Error;
 use std::result::Result;
-use violetabftstore::interlock::::config::ReadableDuration;
+use std::time::Duration;
+use std::u64;
+use std::usize;
+
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+#[serde(rename_all = "kebab-case")]
+pub struct ReadableDuration(Duration);
+
+impl ReadableDuration {
+    pub fn seconds(secs: u64) -> ReadableDuration {
+        ReadableDuration(Duration::from_secs(secs))
+    }
+
+    pub fn minutes(mins: u64) -> ReadableDuration {
+        ReadableDuration(Duration::from_secs(mins * 60))
+    }
+
+    pub fn millis(millis: u64) -> ReadableDuration {
+        ReadableDuration(Duration::from_millis(millis))
+    }
+
+    pub fn as_secs(&self) -> u64 {
+        self.0.as_secs()
+    }
+
+    pub fn as_millis(&self) -> u64 {
+        self.0.as_millis() as u64
+    }
+}
+
+
+
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(default)]

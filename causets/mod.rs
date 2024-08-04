@@ -19,6 +19,17 @@ use std::collections::BinaryHeap;
 use std::collections::LinkedList;
 use std::collections::VecDeque;
 
+use std::convert::From;
+use std::fmt;
+use std::ops::{Deref, Index};
+use std::slice;
+
+use std::ffi::CString;
+use std::os::raw::c_char;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc::{channel, Receiver, Sender};
+
 
 
 // Concrete eval types without a nullable wrapper.
@@ -37,6 +48,21 @@ pub type UuidRef<'a> = &'a [u8];
 pub type StringRef<'a> = &'a [u8];
 pub type Nullable<T> = Option<T>;
 pub type NullableRef<'a, T> = Option<&'a [u8]>;
+pub type VectorValue = VectorValueImpl;
+pub type VectorValueRef = VectorValueImpl;
+pub type VectorValueRef<'a> = VectorValueImpl;
+pub type VectorValueRef<'a> = VectorValueImpl;
+
+
+
+// A trait for types that can be converted to a `VectorValue`.
+// This trait is implemented for all `VectorValue` types.
+// It is implemented for `VectorValue` and `VectorValueRef`
+// so that we can use `as_any` to convert them to `VectorValue`.
+
+pub trait VectorValueConvertible {
+    fn as_vector_value(&self) -> VectorValue;
+}
 
 
 /// A trait for types that can be converted to a `VectorValue`.
@@ -73,9 +99,14 @@ pub type NullableRef<'a, T> = Option<&'a [u8]>;
 /// them to `VectorValue`.
 ///
 /// 
-/// 
+///
 
 
+impl VectorValueConvertible for VectorValue {
+    fn as_vector_value(&self) -> VectorValue {
+        self.clone()
+    }
+}
 
 
 
@@ -138,7 +169,10 @@ impl AsMyBerolinaSQLBool for Option<bool> {
             Some(x) => x,
             None => false,
         }
+
     }
+}
+
 
 
 
@@ -148,7 +182,6 @@ impl AsMyBerolinaSQLBool for Option<bool> {
     //        self.as_my_berolina_sql_bool()
     //    }
     //}
-}
 
     /// Evaluates into a MyBerolinaSQLBool.
     /// This is a convenience function for `as_my_berolina_sql_bool`.
@@ -200,6 +233,15 @@ impl<'a> AsMyBerolinaSQLBool for BytesRef<'a> {
         Ok(!self.is_empty() && ConvertTo::<f64>::convert(self, context)? != 0f64)
     }
 }
+
+impl AsMyBerolinaSQLBool for Decimal {
+    #[inline]
+    fn as_my_berolina_sql_bool(&self, context: &mut EvalContext) -> Result<bool> {
+        Ok(!self.is_zero())
+    }
+}
+
+
 
 impl<'a, T> AsMyBerolinaSQLBool for Option<&'a T>
 where

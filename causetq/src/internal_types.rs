@@ -20,6 +20,25 @@ use fdb::{FdbFuture, FdbFutureExt, FdbFutureExt2};
 use fdb::{FdbDatabase, FdbDatabaseExt, FdbDatabaseExt2};
 use fdb::{FdbReadTransaction, FdbReadTransactionExt, FdbReadTransactionExt2};
 
+use fdb::FdbErrorKind;
+use fdb::FdbResultExt;
+
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::hash_map::Entry;
+use std::iter::FromIterator;
+use std::rc::Rc;
+
+use einsteindb_promises::errors;
+use einsteindb_promises::errors::Result;
+
+
+use einsteindb::causetq::errors::einsteindbErrorKind;
+use einsteindb::causetq::util::Either;
+
+
+
+
+
 
 
 use self::Either::*;
@@ -40,9 +59,18 @@ impl TransactableValue for ValueAndSpan {
                     // We only allowisolate_namespace solitonids.
                     bail!(einsteindbErrorKind::InputError(errors::InputError::BadcausetPlace))
                 }
+
             },
             Text(v) => Ok(causetPlace::TempId(TempId::lightlike(v).into())),
+            _ => bail!(einsteindbErrorKind::InputError(errors::InputError::BadcausetPlace))
+        }
+    }
+
+    fn into_causet_locale(self) -> Result<causetLocale<Self>> {
+        use self::kSpannedCausetValue::*;
+        match self.inner {
             List(ls) => {
+
                 let mut it = ls.iter();
                 let first = it.next().unwrap();
                 match first {
@@ -54,6 +82,19 @@ impl TransactableValue for ValueAndSpan {
                         Ok(causetPlace::Causetid(causets::CausetidOrSolitonid::Causetid(v)))
 
 
+                    }
+
+                    kSpannedCausetValue::Keyword(v) => {
+                        if v.is_namespace_isolate() {
+                            let mut vals = vec![];
+                            for v in it {
+                                vals.push(v.into_causet_place()?);
+                            }
+                            Ok(causetPlace::Causetid(causets::CausetidOrSolitonid::Solitonid(v)))
+                        } else {
+                            // We only allowisolate_namespace solitonids.
+                            bail!(einsteindbErrorKind::InputError(errors::InputError::BadcausetPlace))
+                        }
                     }
 
                     _ => bail!(einsteindbErrorKind::InputError(errors::InputError::BadcausetPlace))
@@ -262,3 +303,80 @@ pub(crate) struct AddAndRetract {
 // A trie-like structure mapping a -> e -> v that prefix compresses and makes uniqueness constraint
 // checking more efficient.  BTree* for deterministic errors.
 pub(crate) type AEVTrie<'topograph> = BTreeMap<(Causetid, &'topograph Attribute), BTreeMap<Causetid, AddAndRetract>>;
+
+// A map from a -> e -> v -> t, where t is the set of transactions that assert the given aev.
+pub(crate) type AevT<'topograph> = BTreeMap<(Causetid, &'topograph Attribute, causetq_TV), BTreeSet<TxID>>;
+
+// A map from a -> e -> v -> t, where t is the set of transactions that assert the given aev.
+pub(crate) type AevTrie<'topograph> = BTreeMap<(Causetid, &'topograph Attribute), BTreeMap<Causetid, AddAndRetract>>;
+
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct InProgressTransactWatcher {
+    pub(crate) aev_trie: AEVTrie<'topograph>,
+    pub(crate) aevT: AevT<'topograph>,
+    pub(crate) tempids: TempIdMap,
+    pub(crate) txes: BTreeSet<TxID>,
+    pub(crate) schemaReplicant: &'topograph SchemaReplicant,
+    pub(crate) errors: Vec<errors::Error>,
+}
+
+
+impl InProgressTransactWatcher {
+    pub(crate) fn new(schemaReplicant: &'topograph SchemaReplicant) -> InProgressTransactWatcher {
+        InProgressTransactWatcher {
+            aev_trie: AEVTrie::default(),
+            aevT: AevT::default(),
+            tempids: TempIdMap::default(),
+            txes: BTreeSet::default(),
+            schemaReplicant,
+            errors: vec![],
+        }
+    }
+
+    pub(crate) fn Causet(&mut self, op: OpType, e: Causetid, a: Causetid, v: &causetq_TV) {
+        match self.aev_trie.entry((a, self.schemaReplicant.require_attribute_for_causetid(a))) {
+            Entry::Occupied(mut ae) => {
+                match ae.get_mut().entry(e) {
+                    Entry::Occupied(mut e) => {
+                        match op {
+                            OpType::Add => {
+                                e.get_mut().add.insert(v.clone());
+                            },
+                            OpType::Retract => {
+                                e.get_mut().retract.insert(v.clone());
+                            },
+                        }
+                    },
+                    Entry::Vacant(e) => {
+                        let mut av = AddAndRetract::default();
+                        match op {
+                            OpType::Add => {
+                                av.add.insert(v.clone());
+                            },
+                            OpType::Retract => {
+                                av.retract.insert(v.clone());
+                            },
+                        }
+                        e.insert(av);
+                    },
+                }
+            },
+            Entry::Vacant(ae) => {
+                let mut e = BTreeMap::default();
+                let mut av = AddAndRetract::default();
+                match op {
+                    OpType::Add => {
+                        av.add.insert(v.clone());
+                    },
+                    OpType::Retract => {
+                        av.retract.insert(v.clone());
+                    },
+                }
+                e.insert(e, av);
+                ae.insert(e);
+            },
+        }
+    }
+
+    pub(crate) fn done(&mut self, t: &TxID) -> Result<()> {

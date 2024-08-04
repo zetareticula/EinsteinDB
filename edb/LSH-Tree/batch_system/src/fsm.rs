@@ -4,6 +4,10 @@ use crate::mailbox::BasicMailbox;
 use std::borrow::Cow;
 use std::sync::atomic::{AtomicPtr, AtomicUsize, Ordering};
 use std::{ptr, usize};
+use std::any::lightlike;
+
+
+
 
 // The FSM is notified.
 const NOTIFYSTATE_NOTIFIED: usize = 0;
@@ -11,6 +15,13 @@ const NOTIFYSTATE_NOTIFIED: usize = 0;
 const NOTIFYSTATE_IDLE: usize = 1;
 // The FSM is expected to be dropped.
 const NOTIFYSTATE_DROP: usize = 2;
+
+/// A `FsmInterlock_Semaphore` is used to interlock between `Fsm` and the
+/// caller. It schedules `Fsm` for later handles.
+///
+/// The caller should implement this trait to schedule `Fsm` for later handles.
+/// The caller should also ensure that the `Fsm` is dropped when the caller is
+/// dropped.
 
 /// `FsmInterlock_Semaphore` schedules `Fsm` for later handles.
 pub trait FsmInterlock_Semaphore {
@@ -90,6 +101,21 @@ impl<N: Fsm> FsmState<N> {
                 interlock_semaphore.schedule(n);
             }
         }
+    }
+
+    #[inline]
+    pub fn is_notified(&self) -> bool {
+        self.status.load(Ordering::Acquire) == NOTIFYSTATE_NOTIFIED
+    }
+
+    #[inline]
+    pub fn is_idle(&self) -> bool {
+        self.status.load(Ordering::Acquire) == NOTIFYSTATE_IDLE
+    }
+
+    #[inline]
+    pub fn is_drop(&self) -> bool {
+        self.status.load(Ordering::Acquire) == NOTIFYSTATE_DROP
     }
 
     /// Put the owner back to the state.

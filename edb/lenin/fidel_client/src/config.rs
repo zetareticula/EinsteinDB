@@ -1,7 +1,10 @@
 // Copyright 2020 WHTCORPS INC Project Authors. Licensed Under Apache-2.0
 
 use std::error::Error;
-use violetabftstore::interlock::::config::ReadableDuration;
+use std::fmt;
+
+use serde::{Deserialize, Serialize};
+
 
 /// The configuration for a FIDel Client.
 ///

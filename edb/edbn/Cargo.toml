@@ -12,6 +12,7 @@ edition = "2018"
 publish = false
 
 [features]
+
 bundled_sqlite3 = ["rusqlite/bundled"]
 sqlcipher = ["rusqlite/sqlcipher", "edb_edb/sqlcipher"]
 syncable = ["edb_lenin", "lenin_promises", "edb_edb/syncable"]

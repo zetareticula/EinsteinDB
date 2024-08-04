@@ -451,3 +451,91 @@ lightlike: mpsc::LooseBoundelightlike<C::Message>,
     };
     (router, system)
 }
+
+
+#[causet(test)]
+mod tests {
+    use super::*;
+    use crate::fsm::{Fsm, FsmInterlock_Semaphore};
+    use crate::router::test_runner::TestRunner;
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    struct TestFsm {
+        mailbox: Option<BasicMailbox<TestFsm>>,
+        stopped: bool,
+    }
+
+    impl Fsm for TestFsm {
+        fn is_stopped(&self) -> bool {
+            self.stopped
+        }
+
+        fn take_mailbox(&mut self) -> Option<BasicMailbox<Self>> {
+            self.mailbox.take()
+        }
+
+        fn set_mailbox(&mut self, mailbox: Cow<'_, BasicMailbox<Self>>) {
+            self.mailbox = Some(mailbox.into_owned());
+        }
+    }
+
+    struct TestHandler {
+        tx: mpsc::lightlikeer<FsmTypes<TestFsm, TestFsm>>,
+    }
+
+    impl PollHandler<TestFsm, TestFsm> for TestHandler {
+        fn begin(&mut self, _batch_size: usize) {}
+
+        fn handle_control(&mut self, control: &mut TestFsm) -> Option<usize> {
+            if control.stopped {
+                return None;
+            }
+            control.stopped = true;
+            Some(0)
+        }
+
+        fn handle_normal(&mut self, normal: &mut TestFsm) -> Option<usize> {
+            if normal.stopped {
+                return None;
+            }
+            normal.stopped = true;
+            Some(0)
+        }
+
+        fn lightlike(&mut self, batch: &mut [Box<TestFsm>]) {
+            for fsm in batch {
+                self.tx.lightlike(FsmTypes::Normal(fsm.clone())).unwrap();
+            }
+        }
+    }
+
+    struct TestBuilder {
+        tx: mpsc::lightlikeer<FsmTypes<TestFsm, TestFsm>>,
+    }
+
+    impl HandlerBuilder<TestFsm, TestFsm> for TestBuilder {
+        type Handler = TestHandler;
+
+        fn build(&mut self) -> TestHandler {
+            TestHandler { tx: self.tx.clone() }
+        }
+    }
+
+    #[test]
+    fn test_batch_system() {
+        let (tx, rx) = mpsc::channel();
+        let (router, mut system) = create_system(&Config::default(), tx, Box::new(TestFsm { mailbox: None, stopped: false }));
+        let mut builder = TestBuilder { tx: rx };
+        system.spawn("test".to_owned(), builder);
+        thread::sleep(Duration::from_millis(100));
+        system.shutdown();
+        let (tx, rx) = mpsc::channel();
+        let (router, mut system) = create_system(&Config::default(), tx, Box::new(TestFsm { mailbox: None, stopped: false }));
+        let mut builder = TestBuilder { tx: rx };
+
+        system.spawn("test".to_owned(), builder);
+        thread::sleep(Duration::from_millis(100));
+        system.shutdown();
+    }
+}

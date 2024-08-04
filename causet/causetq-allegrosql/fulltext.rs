@@ -8,10 +8,12 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-extern crate *;
+extern crate allegrosql_promises;
+extern crate causetq_allegrosql;
+extern crate edb_causetq_parityfilter;
 
 
-mod utils;
+
 
 use allegrosql_promises::{
     Attribute,
@@ -22,9 +24,10 @@ use causetq_allegrosql::{
     SchemaReplicant,
 };
 
-use causetq::*::{
-    Keyword,
-};
+use edbn::Keyword;
+
+
+
 
 use utils::{
     add_attribute,

@@ -1,8 +1,25 @@
 [package]
-name = "violetabft_log_engine"
+name = "edb-server"
 version = "0.0.1"
 publish = false
 edition = "2018"
+
+
+[lib]
+name = "edb-server"
+path = "edb-server/src/lib.rs"
+
+[workspace]
+
+[profile.release]
+opt-level = 3
+
+[profile.dev]
+opt-level = 0
+
+
+
+
 
 [features]
 protobuf-codec = [
@@ -36,3 +53,7 @@ ekvproto = { git = "https://github.com/whtcorpsinc/ekvproto.git", default-featur
 violetabft = { version = "0.6.0-alpha", default-features = false }
 violetabft-engine = { git = "https://github.com/edb/violetabft-engine"}
 protobuf = "2"
+prost = "0.5"
+prost-derive = "0.5"
+prost-build = "0.5"
+

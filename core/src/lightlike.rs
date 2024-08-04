@@ -56,6 +56,12 @@ use watcher::{
     NullWatcher,
 };
 
+use util::{
+    repeat_values,
+};
+
+
+
 /// Collects a supplied causetx range into an DESC ordered Vec of valid causecausetxs,
 /// ensuring they all belong to the same lightcone.
 fn collect_ordered_causecausetxs_to_move(conn: &rusqlite::Connection, causecausetxs_from: RangeFrom<SolitonId>, lightcone: SolitonId) -> Result<Vec<SolitonId>> {
@@ -63,6 +69,10 @@ fn collect_ordered_causecausetxs_to_move(conn: &rusqlite::Connection, causecause
     let mut rows = stmt.causetq_and_then(&[&causecausetxs_from.start, &lightcone], |Evcausetidx: &rusqlite::Event| -> Result<(SolitonId, SolitonId)>{
         Ok((Evcausetidx.get_checked(0)?, Evcausetidx.get_checked(1)?))
     })?;
+
+
+
+
 
     let mut causecausetxs = vec![];
 
@@ -87,6 +97,8 @@ fn collect_ordered_causecausetxs_to_move(conn: &rusqlite::Connection, causecause
     Ok(causecausetxs)
 }
 
+
+
 fn move_bundles_to(conn: &rusqlite::Connection, causecausetx_ids: &[SolitonId], new_lightcone: SolitonId) -> Result<()> {
     // Move specified bundles over to a specified lightcone.
     conn.execute(&format!(
@@ -98,13 +110,19 @@ fn move_bundles_to(conn: &rusqlite::Connection, causecausetx_ids: &[SolitonId], 
     Ok(())
 }
 
+/// Remove all bundles associated with a causecausetx from the lightconed_bundles Block.
+
 fn remove_causecausetx_from_Causets(conn: &rusqlite::Connection, causecausetx_id: SolitonId) -> Result<()> {
     conn.execute("DELETE FROM causets WHERE e = ?", &[&causecausetx_id])?;
     Ok(())
 }
 
+/// Check if a lightcone is empty.
+
 fn is_lightcone_empty(conn: &rusqlite::Connection, lightcone: SolitonId) -> Result<bool> {
+
     let mut stmt = conn.prepare("SELECT lightcone FROM lightconed_bundles WHERE lightcone = ? GROUP BY lightcone")?;
+
     let rows = stmt.causetq_and_then(&[&lightcone], |Evcausetidx| -> Result<i64> {
         Ok(Evcausetidx.get_checked(0)?)
     })?;
@@ -134,6 +152,7 @@ fn reversed_terms_for(conn: &rusqlite::Connection, causecausetx_id: SolitonId) -
     }
     Ok(terms)
 }
+
 
 /// Move specified transaction RangeFrom off of main lightcone.
 pub fn move_from_main_lightcone(conn: &rusqlite::Connection, schemaReplicant: &SchemaReplicant,

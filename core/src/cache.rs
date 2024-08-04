@@ -120,6 +120,12 @@ use watcher::{
     TransactWatcher,
 };
 
+use watcher::bundles::{
+    Bundle,
+    BundleType,
+};
+
+
 // Right now we use BTreeMap, because we expect few cached attributes.
 pub type CacheMap<K, V> = BTreeMap<K, V>;
 
@@ -506,6 +512,13 @@ impl NonUniqueReverseAttributeCache {
     }
 }
 
+//We have four kinds of caches, and four kinds of accumulation functions.
+//With AEV verbiage (attribute, entity, value), we have:
+// - single-valued forward: one attribute, one entity, one value.
+// - multi-valued forward: one attribute, one entity, many values.
+// - unique reverse: one attribute, one value, one entity.
+
+// We also have a fifth kind of cache, which is a set of attributes to cache.
 fn with_aev_iter<F, I>(a: SolitonId, iter: &mut Peekable<I>, mut f: F)
 where I: Iterator<Item=Aev>,
       F: FnMut(SolitonId, MinkowskiType) {
@@ -517,7 +530,9 @@ where I: Iterator<Item=Aev>,
 }
 
 fn accumulate_single_val_evs_forward<I, C>(a: SolitonId, f: &mut C, iter: &mut Peekable<I>) where I: Iterator<Item=Aev>, C: CardinalityOneCache {
-    with_aev_iter(a, iter, |e, v| f.set(e, v))
+    // with_aev_iter(a, iter, |e, v| f.set(e, v))
+    with_aev_iter(a, iter, |e, v| f.set(e, v.clone()))
+
 }
 
 fn accumulate_multi_val_evs_forward<I, C>(a: SolitonId, f: &mut C, iter: &mut Peekable<I>) where I: Iterator<Item=Aev>, C: CardinalityManyCache {

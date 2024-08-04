@@ -8,6 +8,9 @@ use std::{ptr, slice, sync::Mutex, thread};
 use einsteindb_alloc::jemalloc_ctl::{epoch, stats, Error};
 use einsteindb_alloc::jemalloc_sys::malloc_stats_print;
 
+// This is a simple wrapper around the `jemalloc` crate, which provides a `Jemalloc` type that
+// implements the `GlobalAlloc` trait.  This allows us to use the `jemalloc` allocator as the global
+
 pub type Allocator = einsteindb_alloc::jemallocator::Jemalloc;
 pub const fn allocator() -> Allocator {
     einsteindb_alloc::jemallocator::Jemalloc
@@ -249,3 +252,19 @@ mod profiling {
         Err(ProfError::MemProfilingNotEnabled)
     }
 }
+
+
+
+// This is a simple wrapper around the `jemalloc` crate, which provides a `Jemalloc` type that
+// implements the `GlobalAlloc` trait.  This allows us to use the `jemalloc` allocator as the global
+// allocator for the entire process.  This is useful for testing and benchmarking, as it allows us to
+// easily switch between different allocators without changing any code.  To use the `jemalloc`
+// allocator, simply change the type alias in this file to `jemalloc::Jemalloc`.
+//
+// pub type Allocator = jemallocator::Jemalloc;
+//
+//
+// pub const fn allocator() -> Allocator {
+//     jemallocator::Jemalloc
+// }
+//

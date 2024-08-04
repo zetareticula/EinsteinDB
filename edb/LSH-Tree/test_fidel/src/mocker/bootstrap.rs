@@ -1,6 +1,9 @@
 // Copyright 2020 WHTCORPS INC Project Authors. Licensed Under Apache-2.0
 
 use ekvproto::fidel_timeshare::*;
+use fidel_client::FidelMocker;
+
+
 
 use super::*;
 
@@ -33,3 +36,26 @@ impl FidelMocker for AlreadyBootstrapped {
         Some(Ok(resp))
     }
 }
+
+#[derive(Debug)]
+pub struct Bootstrapped;
+
+impl FidelMocker for Bootstrapped {
+    fn is_bootstrapped(&self, _: &IsBootstrappedRequest) -> Option<Result<IsBootstrappedResponse>> {
+        let mut header = ResponseHeader::default();
+        header.set_cluster_id(DEFAULT_CLUSTER_ID);
+
+        let mut resp = IsBootstrappedResponse::default();
+        resp.set_bootstrapped(true);
+
+        Some(Ok(resp))
+    }
+}
+
+
+#[derive(Debug)]
+pub struct ChangeLeader {
+    pub leader: Member,
+}
+
+

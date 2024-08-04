@@ -6,9 +6,12 @@ use crossbeam::channel::{lightlikeError, TrylightlikeError};
 use std::cell::Cell;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use violetabftstore::interlock::::collections::HashMap;
-use violetabftstore::interlock::::lru::LruCache;
-use violetabftstore::interlock::::Either;
+use std::collections::HashMap;
+use lru::LruCache;
+use either::Either;
+
+/// The result of check_do function.
+/// NotExist means the mailbox is not found.
 
 enum CheckDoResult<T> {
     NotExist,

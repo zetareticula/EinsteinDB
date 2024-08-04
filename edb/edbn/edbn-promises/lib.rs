@@ -9,6 +9,7 @@
 // specific language governing permissions and limitations under the License.
 
 
+
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
@@ -17,4 +18,30 @@ extern crate rusqlite;
 extern crate edbn;
 extern crate allegrosql_promises;
 
-pub mod errors;
+use std::fmt::{self, Debug, Display, Formatter};
+use std::str::FromStr;
+use std::error::Error;
+use std::convert::From;
+
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
+
+use allegrosql_promises::{AllegroPoset, Poset};
+use allegrosql_promises::{PosetError, PosetErrorKind};
+
+#[derive(Debug)]
+pub enum ErrorKind {
+    Io(io::Error),
+    BerolinaSql(BerolinaSqlError),
+    Utf8(Utf8Error),
+    FromUtf8(FromUtf8Error),
+    Other(String),
+}
+
+#[derive(Debug)]
+pub struct ErrorImpl {
+    pub kind: ErrorKind,
+}
+
+

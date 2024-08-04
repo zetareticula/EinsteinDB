@@ -17,15 +17,12 @@ use ekvproto::meta_timeshare;
 use ekvproto::fidel_timeshare::{self, Member};
 use ekvproto::replication_mode_timeshare::{BraneReplicationStatus, ReplicationStatus};
 use security::SecurityManager;
-use violetabftstore::interlock::::time::duration_to_sec;
-use violetabftstore::interlock::::{Either, HandyRwLock};
 use txn_types::TimeStamp;
 
 use super::metrics::*;
 use super::util::{check_resp_header, sync_request, validate_lightlikepoints, Inner, LeaderClient};
 use super::{ClusterVersion, Config, FidelFuture, UnixSecs};
 use super::{Error, FidelClient, BraneInfo, BraneStat, Result, REQUEST_TIMEOUT};
-use violetabftstore::interlock::::timer::GLOBAL_TIMER_HANDLE;
 
 const CQ_COUNT: usize = 1;
 const CLIENT_PREFIX: &str = "fidel";

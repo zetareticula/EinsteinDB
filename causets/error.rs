@@ -16,6 +16,24 @@ use failure::Fail;
 use std::fmt::{self, Display, Formatter};
 use std::io;
 use std::result;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::sync::PoisonError;
+use std::sync::RwLock;
+use std::sync::mpsc::RecvError;
+use std::sync::mpsc::SendError;
+use std::sync::mpsc::TryRecvError;
+
+
+use std::collections::HashMap;
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
+
+
+use std::fmt::Debug;
+use std::fmt::Display;
+
+
 
 
 
@@ -200,6 +218,19 @@ pub enum EvaluateError {
 
 
 
+impl Display for EvaluateError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            EvaluateError::InvalidCharacterString { ref charset } => {
+                write!(f, "Invalid {} character string", charset)
+            }
+            EvaluateError::DeadlineExceeded => write!(f, "Execution terminated due to exceeding the deadline"),
+            EvaluateError::Custom { ref msg, .. } => write!(f, "{}", msg),
+            EvaluateError::Other(ref msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
  
 
 impl EvaluateError {
@@ -222,12 +253,24 @@ impl From<Box<dyn std::error::Error + Send + Sync>> for EvaluateError {
     }
 }
 
+impl From<IoError> for EvaluateError {
+    #[inline]
+    fn from(err: IoError) -> Self {
+        EvaluateError::Other(err.to_string())
+    }
+}
+
+
 impl From<EinsteinDB_util::deadline::DeadlineError> for EvaluateError {
+    /// Converts a `DeadlineError` to a `EvaluateError`.
+    /// This conversion is lossy, as the `DeadlineError` is not exposed to the user.
     #[inline]
     fn from(_: EinsteinDB_util::deadline::DeadlineError) -> Self {
         EvaluateError::DeadlineExceeded
     }
 }
+
+
 
 #[derive(Fail, Debug)]
 #[fail(display = "{}", _0)]
@@ -262,6 +305,14 @@ impl std::fmt::Debug for Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, f)
+    }
+}
+
+
+impl From<ErrorInner> for Error {
+    #[inline]
+    fn from(e: ErrorInner) -> Self {
+        Error(Box::new(e))
     }
 }
 

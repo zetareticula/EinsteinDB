@@ -1,18 +1,31 @@
 [package]
 name = "berolinasql"
 version = "0.1.0"
-edition = "2021"
+edition = "2018"
 description = "BerolinaSQL is a SQL engine that is based on the BerolinaDB database system."
+license = "Apache-2.0"
 
 
 [[bin]]
 name = "berolinasql"
-path = "../berolinasql/src/main.rs"
+path = "src/main.rs"
+
+
 
 [dependencies]
 rusty-peg = "0.4.0"
 causetq = {path = "../causetq"}
 einstein_ml = {path = "../einstein_ml"}
+einstein_merkle = {path = "../einstein_merkle"}
+einstein_store = {path = "../einstein_store"}
+
+[profile.release]
+lto = true
+
+[profile.dev]
+opt-level = 3
+
+
 
 
 
