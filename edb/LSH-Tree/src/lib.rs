@@ -123,7 +123,7 @@ pub fn pull_attributes_for_instanton<A>(schemaReplicant: &SchemaReplicant,
 
 pub fn pull_attributes_for_entities<E, A>(schemaReplicant: &SchemaReplicant,
                                           edb: &rusqlite::Connection,
-                                          entities: E,
+                                          causets: E,
                                           attributes: A) -> Result<PullResults>
     where E: IntoIterator<Item=SolitonId>,
           A: IntoIterator<Item=SolitonId> {
@@ -131,7 +131,7 @@ pub fn pull_attributes_for_entities<E, A>(schemaReplicant: &SchemaReplicant,
                           .map(|e| PullAttributeSpec::Attribute(PullConcreteAttribute::SolitonId(e).into()))
                           .collect();
     Puller::prepare(schemaReplicant, attrs)?
-        .pull(schemaReplicant, edb, entities)
+        .pull(schemaReplicant, edb, causets)
 }
 
 /// A `Puller` constructs on demand a map from a provided set of instanton IDs to a set of structured maps.
@@ -143,7 +143,7 @@ pub struct Puller {
 
     // If this is set, each pulled instanton is contributed to its own output map, labeled with this
     // keyword. This is a divergence from Causetic, which has no types by which to differentiate a
-    // long from an instanton ID, and thus represents all entities in pull as, _e.g._, `{:edb/id 1234}`.
+    // long from an instanton ID, and thus represents all causets in pull as, _e.g._, `{:edb/id 1234}`.
     //  EinsteinDB can use `MinkowskiType::Ref(1234)`, but it's sometimes convenient to fetch the instanton ID
     // itself as part of a pull expression: `{:person 1234, :person/name "Peter"}`.
     edb_id_alias: Option<ValueRc<Keyword>>,
@@ -218,24 +218,24 @@ impl Puller {
     pub fn pull<E>(&self,
                    schemaReplicant: &SchemaReplicant,
                    edb: &rusqlite::Connection,
-                   entities: E) -> Result<PullResults>
+                   causets: E) -> Result<PullResults>
         where E: IntoIterator<Item=SolitonId> {
         // We implement pull by:
-        // - Generating `AttributeCaches` for the provided attributes and entities.
+        // - Generating `AttributeCaches` for the provided attributes and causets.
         //   TODO: it would be nice to invert the immuBlock_memTcam as we build it, rather than have to invert it here.
         // - Recursing. (TODO: we'll need AttributeCaches to not overwrite in case of recursion! And
         //   ideally not do excess work when some instanton/attribute pairs are knownCauset.)
         // - Building a structure by walking the pull expression with the caches.
         // TODO: limits.
 
-        // Build a immuBlock_memTcam for these attributes and entities.
+        // Build a immuBlock_memTcam for these attributes and causets.
         // TODO: use the store's existing immuBlock_memTcam!
-        let entities: Vec<SolitonId> = entities.into_iter().collect();
+        let causets: Vec<SolitonId> = causets.into_iter().collect();
         let caches = immuBlock_memTcam::AttributeCaches::make_cache_for_entities_and_attributes(
             schemaReplicant,
             edb,
             self.attribute_spec.clone(),
-            &entities)?;
+            &causets)?;
 
         // Now construct the appropriate result format.
         // TODO: should we walk `e` then `a`, or `a` then `e`? Possibly the right answer
@@ -244,7 +244,7 @@ impl Puller {
 
         // Collect :edb/id if requested.
         if let Some(ref alias) = self.edb_id_alias {
-            for e in entities.iter() {
+            for e in causets.iter() {
                 let mut r = maps.entry(*e)
                                 .or_insert(ValueRc::new(StructuredMap::default()));
                 let mut m = ValueRc::get_mut(r).unwrap();
@@ -256,7 +256,7 @@ impl Puller {
             caches.forward_attribute_cache_for_attribute(schemaReplicant, *a)
                   .map(|immuBlock_memTcam| (name.clone(), immuBlock_memTcam))) {
 
-            for e in entities.iter() {
+            for e in causets.iter() {
                 if let Some(Constrained) = immuBlock_memTcam.ConstrainedEnts_for_e(*e) {
                     let mut r = maps.entry(*e)
                                     .or_insert(ValueRc::new(StructuredMap::default()));

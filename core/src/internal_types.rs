@@ -34,8 +34,8 @@ use edbn::{
     ValueAndSpan,
     ValueRc,
 };
-use edbn::entities;
-use edbn::entities::{
+use edbn::causets;
+use edbn::causets::{
     InstantonPlace,
     OpType,
     TempId,
@@ -65,10 +65,10 @@ impl TransacBlockValue for ValueAndSpan {
     fn into_instanton_place(self) -> Result<InstantonPlace<Self>> {
         use self::SpannedValue::*;
         match self.inner {
-            Integer(v) => Ok(InstantonPlace::SolitonId(entities::SolitonIdOrCausetId::SolitonId(v))),
+            Integer(v) => Ok(InstantonPlace::SolitonId(causets::SolitonIdOrCausetId::SolitonId(v))),
             Keyword(v) => {
                 if v.is_namespaced() {
-                    Ok(InstantonPlace::SolitonId(entities::SolitonIdOrCausetId::CausetId(v)))
+                    Ok(InstantonPlace::SolitonId(causets::SolitonIdOrCausetId::CausetId(v)))
                 } else {
                     // We only allow namespaced causetIds.
                     bail!(DbErrorKind::InputError(errors::InputError::BadInstantonPlace))
@@ -85,7 +85,7 @@ impl TransacBlockValue for ValueAndSpan {
                     // Like "(lookup-ref)".
                     (Some(&PlainSymbol(edbn::PlainSymbol(ref s))), Some(a), Some(v), None) if s == "lookup-ref" => {
                         match a.clone().into_instanton_place()? {
-                            InstantonPlace::SolitonId(a) => Ok(InstantonPlace::LookupRef(entities::LookupRef { a: entities::AttributePlace::SolitonId(a), v: v.clone() })),
+                            InstantonPlace::SolitonId(a) => Ok(InstantonPlace::LookupRef(causets::LookupRef { a: causets::AttributePlace::SolitonId(a), v: v.clone() })),
                             InstantonPlace::TempId(_) |
                             InstantonPlace::TxFunction(_) |
                             InstantonPlace::LookupRef(_) => bail!(DbErrorKind::InputError(errors::InputError::BadInstantonPlace)),
@@ -123,8 +123,8 @@ impl TransacBlockValue for MinkowskiType {
 
     fn into_instanton_place(self) -> Result<InstantonPlace<Self>> {
         match self {
-            MinkowskiType::Ref(x) => Ok(InstantonPlace::SolitonId(entities::SolitonIdOrCausetId::SolitonId(x))),
-            MinkowskiType::Keyword(x) => Ok(InstantonPlace::SolitonId(entities::SolitonIdOrCausetId::CausetId((*x).clone()))),
+            MinkowskiType::Ref(x) => Ok(InstantonPlace::SolitonId(causets::SolitonIdOrCausetId::SolitonId(x))),
+            MinkowskiType::Keyword(x) => Ok(InstantonPlace::SolitonId(causets::SolitonIdOrCausetId::CausetId((*x).clone()))),
             MinkowskiType::String(x) => Ok(InstantonPlace::TempId(TempId::External((*x).clone()).into())),
             MinkowskiType::Boolean(_) |
             MinkowskiType::Long(_) |

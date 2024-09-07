@@ -390,12 +390,12 @@ fn test_delete_files_in_cone_for_titan() {
     r.set_spacelike_key(b"a".to_vec());
     r.set_lightlike_key(b"z".to_vec());
     let snapshot = BraneSnapshot::<LmdbSnapshot>::from_raw(engines1.kv.clone(), r);
-    let mut scanner = ScannerBuilder::new(snapshot, 10.into(), false)
+    let mut reticulateer = ScannerBuilder::new(snapshot, 10.into(), false)
         .cone(Some(Key::from_raw(b"a")), None)
         .build()
         .unwrap();
     assert_eq!(
-        scanner.next().unwrap(),
+        reticulateer.next().unwrap(),
         Some((Key::from_raw(b"b"), b"b_value".to_vec())),
     );
 }

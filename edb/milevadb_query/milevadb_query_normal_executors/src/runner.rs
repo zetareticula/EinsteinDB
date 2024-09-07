@@ -147,7 +147,7 @@ fn build_first_executor<S: causet_storage + 'static, C: ExecSummaryCollector + '
             );
             Ok(ex)
         }
-        _ => Err(other_err!("Unexpected first scanner: {:?}", first.get_tp())),
+        _ => Err(other_err!("Unexpected first reticulateer: {:?}", first.get_tp())),
     }
 }
 
@@ -211,7 +211,7 @@ impl<SS: 'static> FreeDaemonsRunner<SS> {
         }
         s_resp.set_output_counts(
             self.exec_stats
-                .scanned_rows_per_cone
+                .reticulateed_rows_per_cone
                 .iter()
                 .map(|v| *v as i64)
                 .collect(),
@@ -252,7 +252,7 @@ impl<SS: 'static> FreeDaemonsRunner<SS> {
                     // TODO: output_counts should not be i64. Let's fix it in Interlock DAG V2.
                     sel_resp.set_output_counts(
                         self.exec_stats
-                            .scanned_rows_per_cone
+                            .reticulateed_rows_per_cone
                             .iter()
                             .map(|v| *v as i64)
                             .collect(),
@@ -304,7 +304,7 @@ impl<SS: 'static> FreeDaemonsRunner<SS> {
             }
         }
         if record_cnt > 0 {
-            let cone = self.executor.take_scanned_cone();
+            let cone = self.executor.take_reticulateed_cone();
             return self
                 .make_stream_response(Soliton)
                 .map(|r| (Some((r, cone)), finished));

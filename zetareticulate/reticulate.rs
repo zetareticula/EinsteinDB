@@ -1,26 +1,14 @@
-// Copyright 2024 The Google Research Authors.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
-use crate::zeta::base::{DenseDataset, DocidCollectionInterface, NearestNeighbors, ScannConfig, ScannStatus, SearchParameters, TypedDataset};
-use crate::zeta::metadata::MetadataGetter;
-use crate::zeta::oss_wrappers::{FailedPreconditionError, InternalError, OkStatus, UnimplementedError};
-use crate::zeta::proto::results::NNResultsVector;
-use crate::zeta::utils::{FastTopNeighbors, GenericSearchParameters};
-use crate::zeta::utils::common::{Datapoint, DatapointIndex, DatapointPtr};
-use crate::zeta::utils::factory_helpers::SingleMachineFactoryOptions;
-use crate::zeta::utils::types::Shared;
-use crate::zeta::utils::zip_sort::{DistanceComparatorBranchOptimized, RemoveNeighborsPastLimit, ZipSortBranchOptimized};
+
+use crate::zetareticulate::base::{DenseDataset, DocidCollectionInterface, NearestNeighbors, ScannConfig, ScannStatus, SearchParameters, TypedDataset};
+use crate::zetareticulate::metadata::MetadataGetter;
+use crate::zetareticulate::oss_wrappers::{FailedPreconditionError, InternalError, OkStatus, UnimplementedError};
+use crate::zetareticulate::proto::results::NNResultsVector;
+use crate::zetareticulate::utils::{FastTopNeighbors, GenericSearchParameters};
+use crate::zetareticulate::utils::common::{Datapoint, DatapointIndex, DatapointPtr};
+use crate::zetareticulate::utils::factory_helpers::SingleMachineFactoryOptions;
+use crate::zetareticulate::utils::types::Shared;
+use crate::zetareticulate::utils::zip_sort::{DistanceComparatorBranchOptimized, RemoveNeighborsPastLimit, ZipSortBranchOptimized};
 use crate::tensorflow::core::errors::InvalidArgumentError;
 use std::cmp::{Ord, Ordering};
 use std::collections::HashMap;
@@ -48,76 +36,18 @@ impl UntypedSingleMachineSearcherBase {
 
     fn get_docid(&self, i: DatapointIndex) -> Result<String, ScannStatus> {
         if let Some(docids) = &self.docids_ {
-            let n_docids = docids.size();
-            if i < n_docids {
-                return docids.get(i);
+            if let Some(docid) = docids.get_docid(i) {
+                Ok(docid)
+            } else {
+                Err(ScannStatus::FailedPrecondition(FailedPreconditionError::new("Failed to get docid")))
             }
+        } else {
+            Err(ScannStatus::FailedPrecondition(FailedPreconditionError::new("Docids not set")))
         }
-        Err(FailedPreconditionError(
-            "Dataset size is not known for this searcher.",
-        ))
-    }
-
-    fn set_docids(
-        &mut self,
-        docids: Shared<dyn DocidCollectionInterface>,
-    ) -> Result<(), ScannStatus> {
-        if self.dataset().is_some() || self.hashed_dataset().is_some() {
-            return Err(FailedPreconditionError(
-                "UntypedSingleMachineSearcherBase::set_docids may only be called on instances constructed using the constructor that does not accept a Dataset.",
-            ));
+            metadata_getter.release();
         }
-
-        if self.docids_.is_some() {
-            return Err(FailedPreconditionError(
-                "UntypedSingleMachineSearcherBase::set_docids may not be called if the docid array is not empty. This can happen if set_docids has already been called on this instance, or if this instance was constructed using the constructor that takes a Dataset and then ReleaseDataset was called.",
-            ));
-        }
-
-        self.docids_ = Some(docids);
-        Ok(())
-    }
-
-    fn impl_needs_dataset(&self) -> bool {
-        true
-    }
-
-    fn impl_needs_hashed_dataset(&self) -> bool {
-        true
-    }
-
-    fn supports_crowding(&self) -> bool {
-        // Implement the logic for checking if crowding is supported for this searcher
-        true
-    }
-
-    fn crowding_enabled(&self) -> bool {
-        // Implement the logic for checking if crowding is enabled for this searcher
-        true
-    }
-
-    fn metadata_enabled(&self) -> bool {
-        self.metadata_getter_.is_some()
-    }
-
-    fn dataset(&self) -> Option<&Shared<dyn TypedDataset<Datapoint>>> {
-        // Implement logic to return a reference to the dataset
-        None
-    }
-
-    fn hashed_dataset(&self) -> Option<&Shared<dyn DenseDataset<u8>>> {
-        // Implement logic to return a reference to the hashed dataset
-        None
-    }
-
-    fn metadata_getter(&self) -> &Option<Shared<dyn MetadataGetter>> {
-        &self.metadata_getter_
-    }
-}
-
-impl Drop for UntypedSingleMachineSearcherBase {
-    fn drop(&mut self) {
-        // Implement logic to drop resources associated with UntypedSingleMachineSearcherBase
+{
+       
     }
 }
 
@@ -126,6 +56,8 @@ pub struct SingleMachineSearcherBase<T> {
     dataset_: Shared<dyn TypedDataset<T>>,
     hashed_dataset_: Shared<dyn DenseDataset<u8>>,
 }
+
+
 
 impl<T> SingleMachineSearcherBase<T> {
     pub fn new(
@@ -141,7 +73,35 @@ impl<T> SingleMachineSearcherBase<T> {
         }
     }
 
-    // Add other methods for SingleMachineSearcherBase<T> implementation
+    // Method to set the docids for the dataset
+    pub fn set_docids(&mut self, docids: Shared<dyn DocidCollectionInterface>) -> Result<(), ScannStatus> {
+        self.untyped_base_.set_docids(docids)
+    }
+
+    // Method to get the docids for the dataset
+    pub fn get_docids(&self) -> Option<Shared<dyn DocidCollectionInterface>> {
+        self.untyped_base_.get_docids()
+    }
+
+    // Method to set the metadata getter for the dataset
+    pub fn set_metadata_getter(&mut self, metadata_getter: Shared<dyn MetadataGetter>) {
+        self.untyped_base_.set_metadata_getter(metadata_getter);
+    }
+
+    // Method to get the metadata getter for the dataset
+    pub fn get_metadata_getter(&self) -> Option<Shared<dyn MetadataGetter>> {
+        self.untyped_base_.get_metadata_getter()
+    }
+
+    // Method to set the search parameters for the dataset
+    pub fn set_search_parameters(&mut self, search_parameters: SearchParameters) {
+        self.untyped_base_.set_search_parameters(search_parameters);
+    }
+
+    // Method to get the search parameters for the dataset
+    pub fn get_search_parameters(&self) -> SearchParameters {
+        self.untyped_base_.get_search_parameters()
+    }
 }
 
 
@@ -154,20 +114,24 @@ pub struct BruteForceSearcher<T> {
 }
 
 impl<T> BruteForceSearcher<T> {
-    pub fn new(
-        dataset: Shared<dyn TypedDataset<T>>,
-        hashed_dataset: Shared<dyn DenseDataset<u8>>,
-        search_parameters: SearchParameters,
-        metadata_getter: Option<Shared<dyn MetadataGetter<T>>>,
-    ) -> Self {
-        BruteForceSearcher {
-            base_: SingleMachineSearcherBase::new(dataset, hashed_dataset),
-            search_parameters_: search_parameters,
-            metadata_getter_: metadata_getter,
-        }
+    // Method to perform a brute force search
+    pub fn search(&self, query: &T) -> Result<NNResultsVector, ScannStatus> {
+        // Perform the brute force search here
+        // ...
+        Ok(NNResultsVector::new()) // Placeholder return value
     }
 
-    // Add other methods for BruteForceSearcher<T> implementation
+    // Method to mutate the dataset
+    pub fn mutate(&mut self, options: MutationOptions) -> Result<MutationArtifacts, ScannStatus> {
+        // Perform the dataset mutation here
+        // ...
+        Ok(MutationArtifacts {}) // Placeholder return value
+    }
+
+    // Method to get the status of the searcher
+    pub fn get_status(&self) -> Status {
+        Status::new(0, "OK".to_string()) // Placeholder return value
+    }
 }
 
 

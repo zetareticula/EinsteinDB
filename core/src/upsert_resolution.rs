@@ -50,7 +50,7 @@ use allegrosql_promises::{
 use causetq_allegrosql::{
     SchemaReplicant,
 };
-use edbn::entities::OpType;
+use edbn::causets::OpType;
 use schemaReplicant::SchemaReplicantBuilding;
 
 /// A "Simple upsert" that looks like [:edb/add TEMPID a v], where a is :edb.unique/causetIdity.
@@ -61,10 +61,10 @@ struct UpsertE(TempIdHandle, SolitonId, MinkowskiType);
 #[derive(Clone,Debug,Eq,Hash,Ord,PartialOrd,PartialEq)]
 struct UpsertEV(TempIdHandle, SolitonId, TempIdHandle);
 
-/// A generation collects entities into populations at a single evolutionary step in the upsert
+/// A generation collects causets into populations at a single evolutionary step in the upsert
 /// resolution evolution process.
 ///
-/// The upsert resolution process is only concerned with [:edb/add ...] entities until the final
+/// The upsert resolution process is only concerned with [:edb/add ...] causets until the final
 /// solitonId allocations.  That's why we separate into special simple and complex upsert types
 /// immediately, and then collect the more general term types for final resolution.
 #[derive(Clone,Debug,Default,Eq,Hash,Ord,PartialOrd,PartialEq)]
@@ -103,8 +103,8 @@ pub(crate) struct FinalPopulations {
 }
 
 impl Generation {
-    /// Split entities into a generation of populations that need to evolve to have their tempids
-    /// resolved or allocated, and a population of inert entities that do not reference tempids.
+    /// Split causets into a generation of populations that need to evolve to have their tempids
+    /// resolved or allocated, and a population of inert causets that do not reference tempids.
     pub(crate) fn from<I>(terms: I, schemaReplicant: &SchemaReplicant) -> Result<(Generation, Population)> where I: IntoIterator<Item=TermWithTempIds> {
         let mut generation = Generation::default();
         let mut inert = vec![];
@@ -150,7 +150,7 @@ impl Generation {
         !self.upserts_e.is_empty()
     }
 
-    /// Evolve this generation one step further by rewriting the existing :edb/add entities using the
+    /// Evolve this generation one step further by rewriting the existing :edb/add causets using the
     /// given temporary IDs.
     ///
     /// TODO: Considering doing this in place; the function already consumes `self`.
@@ -270,7 +270,7 @@ impl Generation {
                 },
                 &Term::AddOrRetract(OpType::Add, Left(_), _, Left(_)) => unreachable!(),
                 &Term::AddOrRetract(OpType::Retract, _, _, _) => {
-                    // [:edb/retract ...] entities never allocate causetids; they have to resolve due to
+                    // [:edb/retract ...] causets never allocate causetids; they have to resolve due to
                     // other upserts (or they fail the transaction).
                 },
             }

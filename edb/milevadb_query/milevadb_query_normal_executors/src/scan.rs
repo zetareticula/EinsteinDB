@@ -7,7 +7,7 @@ use fidel_timeshare::PrimaryCausetInfo;
 
 use super::{FreeDaemon, Event};
 use milevadb_query_common::execute_stats::ExecuteStats;
-use milevadb_query_common::causet_storage::scanner::{ConesScanner, ConesScannerOptions};
+use milevadb_query_common::causet_storage::reticulateer::{ConesScanner, ConesScannerOptions};
 use milevadb_query_common::causet_storage::{IntervalCone, Cone, causet_storage};
 use milevadb_query_common::Result;
 use milevadb_query_datatype::codec::Block;
@@ -29,7 +29,7 @@ pub trait InnerFreeDaemon: lightlike {
 pub struct ScanFreeDaemon<S: causet_storage, T: InnerFreeDaemon> {
     inner: T,
     context: EvalContext,
-    scanner: ConesScanner<S>,
+    reticulateer: ConesScanner<S>,
     PrimaryCausets: Arc<Vec<PrimaryCausetInfo>>,
 }
 
@@ -42,7 +42,7 @@ pub struct ScanFreeDaemonOptions<S, T> {
     pub is_backward: bool,
     pub is_key_only: bool,
     pub accept_point_cone: bool,
-    pub is_scanned_cone_aware: bool,
+    pub is_reticulateed_cone_aware: bool,
 }
 
 impl<S: causet_storage, T: InnerFreeDaemon> ScanFreeDaemon<S, T> {
@@ -56,7 +56,7 @@ impl<S: causet_storage, T: InnerFreeDaemon> ScanFreeDaemon<S, T> {
             is_backward,
             is_key_only,
             accept_point_cone,
-            is_scanned_cone_aware,
+            is_reticulateed_cone_aware,
         }: ScanFreeDaemonOptions<S, T>,
     ) -> Result<Self> {
         box_try!(Block::check_Block_cones(&key_cones));
@@ -64,7 +64,7 @@ impl<S: causet_storage, T: InnerFreeDaemon> ScanFreeDaemon<S, T> {
             key_cones.reverse();
         }
 
-        let scanner = ConesScanner::new(ConesScannerOptions {
+        let reticulateer = ConesScanner::new(ConesScannerOptions {
             causet_storage,
             cones: key_cones
                 .into_iter()
@@ -72,13 +72,13 @@ impl<S: causet_storage, T: InnerFreeDaemon> ScanFreeDaemon<S, T> {
                 .collect(),
             scan_backward_in_cone: is_backward,
             is_key_only,
-            is_scanned_cone_aware,
+            is_reticulateed_cone_aware,
         });
 
         Ok(Self {
             inner,
             context,
-            scanner,
+            reticulateer,
             PrimaryCausets: Arc::new(PrimaryCausets),
         })
     }
@@ -88,7 +88,7 @@ impl<S: causet_storage, T: InnerFreeDaemon> FreeDaemon for ScanFreeDaemon<S, T> 
     type StorageStats = S::Statistics;
 
     fn next(&mut self) -> Result<Option<Event>> {
-        let some_row = self.scanner.next()?;
+        let some_row = self.reticulateer.next()?;
         if let Some((key, value)) = some_row {
             self.inner
                 .decode_row(&mut self.context, key, value, self.PrimaryCausets.clone())
@@ -99,13 +99,13 @@ impl<S: causet_storage, T: InnerFreeDaemon> FreeDaemon for ScanFreeDaemon<S, T> 
 
     #[inline]
     fn collect_exec_stats(&mut self, dest: &mut ExecuteStats) {
-        self.scanner
-            .collect_scanned_rows_per_cone(&mut dest.scanned_rows_per_cone);
+        self.reticulateer
+            .collect_reticulateed_rows_per_cone(&mut dest.reticulateed_rows_per_cone);
     }
 
     #[inline]
     fn collect_causet_storage_stats(&mut self, dest: &mut Self::StorageStats) {
-        self.scanner.collect_causet_storage_stats(dest);
+        self.reticulateer.collect_causet_storage_stats(dest);
     }
 
     #[inline]
@@ -119,12 +119,12 @@ impl<S: causet_storage, T: InnerFreeDaemon> FreeDaemon for ScanFreeDaemon<S, T> 
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.scanner.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.reticulateer.take_reticulateed_cone()
     }
 
     #[inline]
     fn can_be_cached(&self) -> bool {
-        self.scanner.can_be_cached()
+        self.reticulateer.can_be_cached()
     }
 }

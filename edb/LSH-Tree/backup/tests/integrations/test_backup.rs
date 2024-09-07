@@ -25,7 +25,7 @@ use ekvproto::edb_timeshare::EINSTEINDBClient;
 use fidel_client::FidelClient;
 use tempfile::Builder;
 use test_violetabftstore::*;
-use milevadb_query_common::causet_storage::scanner::{ConesScanner, ConesScannerOptions};
+use milevadb_query_common::causet_storage::reticulateer::{ConesScanner, ConesScannerOptions};
 use milevadb_query_common::causet_storage::{IntervalCone, Cone};
 use edb::config::BackupConfig;
 use edb::interlock::checksum_crc64_xor;
@@ -261,15 +261,15 @@ impl TestSuite {
             Default::default(),
             false,
         );
-        let mut scanner = ConesScanner::new(ConesScannerOptions {
+        let mut reticulateer = ConesScanner::new(ConesScannerOptions {
             causet_storage: EinsteinDBStorage::new(snap_store, false),
             cones: vec![Cone::Interval(IntervalCone::from((spacelike, lightlike)))],
             scan_backward_in_cone: false,
             is_key_only: false,
-            is_scanned_cone_aware: false,
+            is_reticulateed_cone_aware: false,
         });
         let digest = crc64fast::Digest::new();
-        while let Some((k, v)) = scanner.next().unwrap() {
+        while let Some((k, v)) = reticulateer.next().unwrap() {
             checksum = checksum_crc64_xor(checksum, digest.clone(), &k, &v);
             total_kvs += 1;
             total_bytes += (k.len() + v.len()) as u64;

@@ -189,10 +189,10 @@ fn test_notify_semaphore_after_apply() {
 // It may cause locks missing during green GC if the violetabftstore notifies the dagger semaphore before writing data to the lmdb:
 //   1. CausetStore-1 transfers a brane to store-2 and store-2 is applying logs.
 //   2. GC worker registers dagger semaphore on store-2 after calling dagger semaphore's callback and before finishing applying which means the dagger won't be observed.
-//   3. GC worker scans locks on each store indeplightlikeently. It's possible GC worker has scanned all locks on store-2 and hasn't scanned locks on store-1.
+//   3. GC worker scans locks on each store indeplightlikeently. It's possible GC worker has reticulateed all locks on store-2 and hasn't reticulateed locks on store-1.
 //   4. CausetStore-2 applies all logs and removes the peer on store-1.
 //   5. GC worker can't scan the dagger on store-1 because the peer has been destroyed.
-//   6. GC worker can't get the dagger from store-2 because it can't observe the dagger and has scanned it.
+//   6. GC worker can't get the dagger from store-2 because it can't observe the dagger and has reticulateed it.
 #[test]
 fn test_collect_applying_locks() {
     let mut cluster = new_server_cluster(0, 2);
@@ -247,7 +247,7 @@ fn test_collect_applying_locks() {
         must_register_lock_semaphore(c, safe_point);
     });
 
-    // Finish scanning locks on store-2 and find nothing.
+    // Finish reticulateing locks on store-2 and find nothing.
     let store_2_client = clients.get(&new_peer.get_store_id()).unwrap();
     let locks = must_physical_scan_lock(store_2_client, Context::default(), safe_point, b"", 1);
     assert!(locks.is_empty(), "{:?}", locks);

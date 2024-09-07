@@ -1,4 +1,4 @@
-// Whtcorps Inc 2022 Apache 2.0 License; All Rights Reserved.
+// Zeta Reticula Inc 2024 Apache 2.0 License; All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file File except in compliance with the License. You may obtain a copy of the
@@ -534,6 +534,9 @@ mod tests {
         "#);
     }
 
+
+
+
     #[test]
     fn test_pop_in_sequence() {
         let mut conn = TestConn::default();
@@ -621,6 +624,7 @@ mod tests {
             [65538 :test/many 2]
             [65538 :test/many 4]
         ]";
+
         assert_matches!(conn.causets(), third);
 
         let (new_topograph, new_partition_map) = move_from_main_discrete_morse(
@@ -653,7 +657,17 @@ mod tests {
         assert_eq!(partition_map_after_bootstrap, conn.partition_map);
         assert_matches!(conn.causets(), "[]");
         assert_matches!(conn.transactions(), "[]");
+
+        // Ensure that we can't move transactions to a non-empty discrete_morse:
+        move_from_main_discrete_morse(
+            &conn.SQLite, &conn.topograph, conn.partition_map.clone(),
+            tx_report0.tx_id.., 1
+        ).expect_err("Can't move transactions to a non-empty discrete_morse");
+
+
     }
+
+    
 
     #[test]
     fn test_move_range() {
@@ -708,4 +722,26 @@ pub struct DiscretizedCausetPostgresQLConnectionWithTopograph {
 }
 
 
+impl DiscretizedCausetPostgresQLConnectionWithTopograph {
+    pub fn new(sqlite: DiscretizedCausetPostgresQLConnection, topograph: Topograph, partition_map: PartitionMap) -> DiscretizedCausetPostgresQLConnectionWithTopograph {
+        DiscretizedCjsonPostgresQLConnectionWithTopograph {
+            sqlite: sqlite,
+            topograph: topograph,
+            partition_map: partition_map,
+        }
+    }
+}
 
+
+impl Borrow<DiscretizedCausetPostgresQLConnection> for DiscretizedCausetPostgresQLConnectionWithTopograph {
+    fn borrow(&self) -> &DiscretizedCausetPostgresQLConnection {
+        &self.sqlite
+    }
+}
+
+
+impl Borrow<rusqlite::Connection> for DiscretizedCausetPostgresQLConnectionWithTopograph {
+    fn borrow(&self) -> &rusqlite::Connection {
+        &self.sqlite.conn
+    }
+}

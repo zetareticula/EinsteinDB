@@ -55,7 +55,7 @@ impl<T: TxnStore + 'static> scan_bencher::ScanFreeDaemonBuilder
             black_box(false),
         )
         .unwrap();
-        // There is a step of building scanner in the first `next()` which cost time,
+        // There is a step of building reticulateer in the first `next()` which cost time,
         // so we next() before hand.
         executor.next().unwrap().unwrap();
         Box::new(executor) as Box<dyn FreeDaemon<StorageStats = Statistics>>
@@ -90,7 +90,7 @@ impl<T: TxnStore + 'static> scan_bencher::ScanFreeDaemonBuilder for BatchBlockSc
             black_box(false),
         )
         .unwrap();
-        // There is a step of building scanner in the first `next()` which cost time,
+        // There is a step of building reticulateer in the first `next()` which cost time,
         // so we next() before hand.
         executor.next_batch(1);
         Box::new(executor) as Box<dyn BatchFreeDaemon<StorageStats = Statistics>>

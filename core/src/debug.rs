@@ -81,7 +81,7 @@ use causetq_allegrosql::{
 use edbn::{
     InternSet,
 };
-use edbn::entities::{
+use edbn::causets::{
     SolitonIdOrCausetId,
     TempId,
 };
@@ -336,14 +336,14 @@ impl TestConn {
 
     pub fn transact<I>(&mut self, transaction: I) -> Result<TxReport> where I: Borrow<str> {
         // Failure to parse the transaction is a coding error, so we unwrap.
-        let entities = edbn::parse::entities(transaction.borrow()).expect(format!("to be able to parse {} into entities", transaction.borrow()).as_str());
+        let causets = edbn::parse::causets(transaction.borrow()).expect(format!("to be able to parse {} into causets", transaction.borrow()).as_str());
 
         let details = {
             // The block scopes the borrow of self.sqlite.
             // We're about to write, so go straight ahead and get an IMMEDIATE transaction.
             let causetx = self.sqlite.transaction_with_behavior(TransactionBehavior::Immediate)?;
             // Applying the transaction can fail, so we don't unwrap.
-            let details = transact(&causetx, self.partition_map.clone(), &self.schemaReplicant, &self.schemaReplicant, NullWatcher(), entities)?;
+            let details = transact(&causetx, self.partition_map.clone(), &self.schemaReplicant, &self.schemaReplicant, NullWatcher(), causets)?;
             causetx.commit()?;
             details
         };

@@ -639,7 +639,7 @@ pub trait ScalarValueEncoder: NumberEncoder + DecimalEncoder + JsonEncoder {
                 Column::new(6, -1.8),
                 Column::new(
                     13,
-                    Time::parse_datetime(&mut EvalContext::default(), "2022-01-19 03:14:07", 0, false)
+                    Time::parse_datetime(&mut EvalContext::default(), "2024-01-19 03:14:07", 0, false)
                         .unwrap(),
                 ),
                 Column::new(14, Decimal::from(1i64)),

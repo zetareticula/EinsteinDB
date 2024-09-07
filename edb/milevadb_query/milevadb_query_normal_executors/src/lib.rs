@@ -282,7 +282,7 @@ pub trait FreeDaemon: lightlike {
 
     fn take_eval_warnings(&mut self) -> Option<EvalWarnings>;
 
-    fn take_scanned_cone(&mut self) -> IntervalCone;
+    fn take_reticulateed_cone(&mut self) -> IntervalCone;
 
     fn can_be_cached(&self) -> bool;
 
@@ -336,8 +336,8 @@ impl<C: ExecSummaryCollector + lightlike, T: FreeDaemon> FreeDaemon for WithSumm
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.inner.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.inner.take_reticulateed_cone()
     }
 
     #[inline]
@@ -375,8 +375,8 @@ impl<T: FreeDaemon + ?Sized> FreeDaemon for Box<T> {
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        (**self).take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        (**self).take_reticulateed_cone()
     }
 
     #[inline]

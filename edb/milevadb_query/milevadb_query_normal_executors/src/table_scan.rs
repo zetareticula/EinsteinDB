@@ -56,7 +56,7 @@ impl<S: causet_storage> BlockScanFreeDaemon<S> {
         context: EvalContext,
         key_cones: Vec<KeyCone>,
         causet_storage: S,
-        is_scanned_cone_aware: bool,
+        is_reticulateed_cone_aware: bool,
     ) -> Result<Self> {
         let inner = BlockInnerFreeDaemon::new(&meta);
         let is_key_only = inner.is_key_only();
@@ -70,7 +70,7 @@ impl<S: causet_storage> BlockScanFreeDaemon<S> {
             is_backward: meta.get_desc(),
             is_key_only,
             accept_point_cone: true,
-            is_scanned_cone_aware,
+            is_reticulateed_cone_aware,
         })
     }
 }
@@ -137,7 +137,7 @@ mod tests {
         let r2 = wrapper.get_point_cone(handle);
         wrapper.cones = vec![r1, r2];
 
-        let mut Block_scanner = super::BlockScanFreeDaemon::Block_scan(
+        let mut Block_reticulateer = super::BlockScanFreeDaemon::Block_scan(
             wrapper.Block_scan,
             EvalContext::default(),
             wrapper.cones,
@@ -146,7 +146,7 @@ mod tests {
         )
         .unwrap();
 
-        let Evcausetidx = Block_scanner
+        let Evcausetidx = Block_reticulateer
             .next()
             .unwrap()
             .unwrap()
@@ -161,11 +161,11 @@ mod tests {
             let v = Evcausetidx.data.get(cid).unwrap();
             assert_eq!(expect_row[&cid], v.to_vec());
         }
-        assert!(Block_scanner.next().unwrap().is_none());
+        assert!(Block_reticulateer.next().unwrap().is_none());
         let expected_counts = vec![0, 1];
         let mut exec_stats = ExecuteStats::new(0);
-        Block_scanner.collect_exec_stats(&mut exec_stats);
-        assert_eq!(expected_counts, exec_stats.scanned_rows_per_cone);
+        Block_reticulateer.collect_exec_stats(&mut exec_stats);
+        assert_eq!(expected_counts, exec_stats.reticulateed_rows_per_cone);
     }
 
     #[test]
@@ -182,7 +182,7 @@ mod tests {
         let r4 = get_cone(Block_ID, (handle + 1) as i64, i64::MAX);
         wrapper.cones = vec![r1, r2, r3, r4];
 
-        let mut Block_scanner = super::BlockScanFreeDaemon::Block_scan(
+        let mut Block_reticulateer = super::BlockScanFreeDaemon::Block_scan(
             wrapper.Block_scan,
             EvalContext::default(),
             wrapper.cones,
@@ -192,7 +192,7 @@ mod tests {
         .unwrap();
 
         for handle in 0..KEY_NUMBER {
-            let Evcausetidx = Block_scanner
+            let Evcausetidx = Block_reticulateer
                 .next()
                 .unwrap()
                 .unwrap()
@@ -207,7 +207,7 @@ mod tests {
                 assert_eq!(expect_row[&cid], v.to_vec());
             }
         }
-        assert!(Block_scanner.next().unwrap().is_none());
+        assert!(Block_reticulateer.next().unwrap().is_none());
     }
 
     #[test]
@@ -226,7 +226,7 @@ mod tests {
         let r4 = get_cone(Block_ID, (handle + 1) as i64, i64::MAX);
         wrapper.cones = vec![r1, r2, r3, r4];
 
-        let mut Block_scanner = super::BlockScanFreeDaemon::Block_scan(
+        let mut Block_reticulateer = super::BlockScanFreeDaemon::Block_scan(
             wrapper.Block_scan,
             EvalContext::default(),
             wrapper.cones,
@@ -237,7 +237,7 @@ mod tests {
 
         for tid in 0..KEY_NUMBER {
             let handle = KEY_NUMBER - tid - 1;
-            let Evcausetidx = Block_scanner
+            let Evcausetidx = Block_reticulateer
                 .next()
                 .unwrap()
                 .unwrap()
@@ -252,6 +252,6 @@ mod tests {
                 assert_eq!(expect_row[&cid], v.to_vec());
             }
         }
-        assert!(Block_scanner.next().unwrap().is_none());
+        assert!(Block_reticulateer.next().unwrap().is_none());
     }
 }

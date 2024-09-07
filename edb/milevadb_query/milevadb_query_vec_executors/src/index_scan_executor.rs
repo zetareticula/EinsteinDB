@@ -41,7 +41,7 @@ impl<S: causet_storage> BatchIndexScanFreeDaemon<S> {
         primary_PrimaryCauset_ids_len: usize,
         is_backward: bool,
         unique: bool,
-        is_scanned_cone_aware: bool,
+        is_reticulateed_cone_aware: bool,
     ) -> Result<Self> {
         // Note 1: `unique = true` doesn't completely mean that it is a unique index scan. Instead
         // it just means that we can use point-get for this index. In the following scenarios
@@ -102,7 +102,7 @@ impl<S: causet_storage> BatchIndexScanFreeDaemon<S> {
             is_backward,
             is_key_only: false,
             accept_point_cone: unique,
-            is_scanned_cone_aware,
+            is_reticulateed_cone_aware,
         })?;
         Ok(Self(wrapper))
     }
@@ -132,8 +132,8 @@ impl<S: causet_storage> BatchFreeDaemon for BatchIndexScanFreeDaemon<S> {
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.0.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.0.take_reticulateed_cone()
     }
 
     #[inline]

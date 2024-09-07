@@ -47,8 +47,8 @@ impl<Src: BatchFreeDaemon> BatchFreeDaemon for BatchStreamAggregationFreeDaemon<
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.0.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.0.take_reticulateed_cone()
     }
 
     #[inline]
@@ -191,10 +191,10 @@ impl<Src: BatchFreeDaemon> BatchStreamAggregationFreeDaemon<Src> {
 
 impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggregationImpl {
     #[inline]
-    fn prepare_entities(&mut self, entities: &mut Entities<Src>) {
-        let src_schemaReplicant = entities.src.schemaReplicant();
+    fn prepare_entities(&mut self, causets: &mut Entities<Src>) {
+        let src_schemaReplicant = causets.src.schemaReplicant();
         for group_by_exp in &self.group_by_exps {
-            entities
+            causets
                 .schemaReplicant
                 .push(group_by_exp.ret_field_type(src_schemaReplicant).clone());
         }
@@ -203,16 +203,16 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggrega
     #[inline]
     fn process_batch_input(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         mut input_physical_PrimaryCausets: LazyBatchPrimaryCausetVec,
         input_logical_rows: &[usize],
     ) -> Result<()> {
-        let context = &mut entities.context;
-        let src_schemaReplicant = entities.src.schemaReplicant();
+        let context = &mut causets.context;
+        let src_schemaReplicant = causets.src.schemaReplicant();
 
         let logical_rows_len = input_logical_rows.len();
         let group_by_len = self.group_by_exps.len();
-        let aggr_fn_len = entities.each_aggr_fn.len();
+        let aggr_fn_len = causets.each_aggr_fn.len();
 
         // Decode PrimaryCausets with muBlock input first, so subsequent access to input can be immuBlock
         // (and the borrow checker will be happy)
@@ -225,7 +225,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggrega
         )?;
         ensure_PrimaryCausets_decoded(
             context,
-            &entities.each_aggr_exprs,
+            &causets.each_aggr_exprs,
             src_schemaReplicant,
             &mut input_physical_PrimaryCausets,
             input_logical_rows,
@@ -243,7 +243,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggrega
             )?;
             eval_exprs_decoded_no_lifetime(
                 context,
-                &entities.each_aggr_exprs,
+                &causets.each_aggr_exprs,
                 src_schemaReplicant,
                 &input_physical_PrimaryCausets,
                 input_logical_rows,
@@ -297,7 +297,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggrega
                 group_spacelike_logical_row = logical_row_idx;
                 self.tuplespaceInstanton
                     .extlightlike(group_key_ref.drain(..).map(ScalarValueRef::to_owned));
-                for aggr_fn in &entities.each_aggr_fn {
+                for aggr_fn in &causets.each_aggr_fn {
                     self.states.push(aggr_fn.create_state());
                 }
             }
@@ -332,7 +332,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggrega
     #[inline]
     fn iterate_available_groups(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         src_is_drained: bool,
         mut iteratee: impl FnMut(&mut Entities<Src>, &[Box<dyn AggrFunctionState>]) -> Result<()>,
     ) -> Result<Vec<LazyBatchPrimaryCauset>> {
@@ -349,7 +349,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggrega
             .iter()
             .map(|tp| LazyBatchPrimaryCauset::decoded_with_capacity_and_tp(number_of_groups, *tp))
             .collect();
-        let aggr_fns_len = entities.each_aggr_fn.len();
+        let aggr_fns_len = causets.each_aggr_fn.len();
 
         // key and state cones of all available groups
         let tuplespaceInstanton_cone = ..number_of_groups * group_by_exps_len;
@@ -357,7 +357,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for BatchStreamAggrega
 
         if aggr_fns_len > 0 {
             for states in self.states[states_cone].Solitons_exact(aggr_fns_len) {
-                iteratee(entities, states)?;
+                iteratee(causets, states)?;
             }
             self.states.drain(states_cone);
         }

@@ -1,5 +1,5 @@
 
-// Copyright 2024 The Google Research Authors.
+// Copyright 2024 The Zeta Reticula Research Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,18 +19,18 @@ use crate::dataset::{Datapoint, Dataset};
 use crate::distance_measures::DistanceMeasure;
 use crate::distance_measures::l2_distance::L2Distance;
 use crate::gmm_utils::GmmUtils;
-use crate::oss_wrappers::{scann_castops, scann_random};
+use crate::oss_wrappers::{reticulate_castops, reticulate_random};
 use crate::proto::partitioning_pb::SerializedKMeansTree_Node;
-use crate::zeta::data_format::datapoint::DatapointIndex;
-use crate::zeta::distance_measures::one_to_one::l2_distance::L2Distance;
-use crate::zeta::oss_wrappers::{scann_castops, scann_random};
-use crate::zeta::proto::partitioning_pb;
-use crate::zeta::utils::fast_top_neighbors::FastTopNeighbors;
-use crate::zeta::utils::gmm_utils;
-use crate::zeta::utils::scalar_quantization_helpers::ScalarQuantizationResults;
-use crate::zeta::utils::types::DimensionIndex;
-use crate::zeta::utils::util_functions::{enumerate, make_dummy_shared, str_format};
-use crate::zeta::utils::{common, fast_top_neighbors, gmm_utils, scalar_quantization_helpers, types, util_functions};
+use crate::zetareticulate::data_format::datapoint::DatapointIndex;
+use crate::zetareticulate::distance_measures::one_to_one::l2_distance::L2Distance;
+use crate::zetareticulate::oss_wrappers::{reticulate_castops, reticulate_random};
+use crate::zetareticulate::proto::partitioning_pb;
+use crate::zetareticulate::utils::fast_top_neighbors::FastTopNeighbors;
+use crate::zetareticulate::utils::gmm_utils;
+use crate::zetareticulate::utils::scalar_quantization_helpers::ScalarQuantizationResults;
+use crate::zetareticulate::utils::types::DimensionIndex;
+use crate::zetareticulate::utils::util_functions::{enumerate, make_dummy_shared, str_format};
+use crate::zetareticulate::utils::{common, fast_top_neighbors, gmm_utils, scalar_quantization_helpers, types, util_functions};
 use crate::tensorflow::core::platform::cpu_info;
 use std::cmp::{max, min};
 use std::collections::HashMap;
@@ -179,7 +179,7 @@ impl KMeansTreeNode {
         let mut fixed_point_centers = vec![Datapoint::new(); k_per_level as usize];
         let mut cur_node_center = None;
 
-        let mut rng = scann_random::new_rng();
+        let mut rng = reticulate_random::new_rng();
         let mut num_centers = 0;
         let mut num_centers_tried = 0;
 

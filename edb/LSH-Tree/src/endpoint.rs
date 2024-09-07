@@ -143,7 +143,7 @@ pub struct BackupCone {
 }
 
 impl BackupCone {
-    /// Get entries from the scanner and save them to causet_storage
+    /// Get entries from the reticulateer and save them to causet_storage
     fn backup<E: Engine>(
         &self,
         writer: &mut BackupWriter,
@@ -196,14 +196,14 @@ impl BackupCone {
         let lightlike_key = self.lightlike_key.clone();
         // Incremental backup needs to output delete records.
         let incremental = !begin_ts.is_zero();
-        let mut scanner = snap_store
-            .entry_scanner(spacelike_key, lightlike_key, begin_ts, incremental)
+        let mut reticulateer = snap_store
+            .entry_reticulateer(spacelike_key, lightlike_key, begin_ts, incremental)
             .unwrap();
 
         let spacelike = Instant::now();
         let mut batch = EntryBatch::with_capacity(BACKUP_BATCH_LIMIT);
         loop {
-            if let Err(e) = scanner.scan_entries(&mut batch) {
+            if let Err(e) = reticulateer.scan_entries(&mut batch) {
                 error!(?e; "backup scan entries failed");
                 return Err(e.into());
             };
@@ -220,7 +220,7 @@ impl BackupCone {
         BACKUP_RANGE_HISTOGRAM_VEC
             .with_label_values(&["scan"])
             .observe(spacelike.elapsed().as_secs_f64());
-        let stat = scanner.take_statistics();
+        let stat = reticulateer.take_statistics();
         Ok(stat)
     }
 

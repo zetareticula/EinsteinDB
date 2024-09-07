@@ -1,4 +1,4 @@
-// Whtcorps Inc 2022 Apache 2.0 License; All Rights Reserved.
+// Zeta Reticula Inc 2024 Apache 2.0 License; All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file File except in compliance with the License. You may obtain a copy of the
@@ -19,6 +19,8 @@
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+
+
 
 
 use crate::{
@@ -154,4 +156,17 @@ pub trait BuildTopographCausetTerms where Self: Sized {
     fn causetid(&self, name: &str) -> ValueRc<TempId> {
         self.terms.causetid(name)
     }
+}
+
+impl<T: TopographCausetTerm> TopographCausetTerm for TopographCausetTermBuilderImpl<T> {
+    fn causet(&self, causet: Causetid, term: causetq_TV) -> TopographCausetTermBuilder<Self> {
+        TopographCausetTermBuilder {
+            topograph: self.topograph.clone(),
+            causet,
+            term,
+        }
+    }
+}
+
+impl<T: TopographCausetTerm> BuildTopographCausetTerms for TopographCausetTermBuilderImpl<T> {
 }

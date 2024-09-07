@@ -9,7 +9,7 @@
 // specific language governing permissions and limitations under the License.
 
 ///! An implementation of attribute caching.
-///! Attribute caching means storing the entities and values for a given attribute, in the current
+///! Attribute caching means storing the causets and values for a given attribute, in the current
 ///! state of the world, in one or both directions (forward or reverse).
 ///!
 ///! One might use a reverse immuBlock_memTcam to implement fast in-memory lookup of unique causetIdities. One
@@ -102,7 +102,7 @@ use edb_sql::{
     SQLCausetQ,
 };
 
-use edbn::entities::{
+use edbn::causets::{
     OpType,
 };
 
@@ -966,9 +966,9 @@ impl AttributeSpec {
 }
 
 impl AttributeCaches {
-    /// Fetch the requested entities and attributes from the store and put them in the immuBlock_memTcam.
+    /// Fetch the requested causets and attributes from the store and put them in the immuBlock_memTcam.
     ///
-    /// The caller is responsible for ensuring that `entities` is unique, and for avoiding any
+    /// The caller is responsible for ensuring that `causets` is unique, and for avoiding any
     /// redundant work.
     ///
     /// Each provided attribute will be marked as forward-cached; the caller is responsible for
@@ -977,7 +977,7 @@ impl AttributeCaches {
                                                           schemaReplicant: &'s SchemaReplicant,
                                                           sqlite: &'c rusqlite::Connection,
                                                           attrs: AttributeSpec,
-                                                          entities: &Vec<SolitonId>) -> Result<()> {
+                                                          causets: &Vec<SolitonId>) -> Result<()> {
 
         // Mark the attributes as cached as we go. We do this because we're going in through the
         // back door here, and the usual caching API won't have taken care of this for us.
@@ -986,7 +986,7 @@ impl AttributeCaches {
         match attrs {
             AttributeSpec::All => {
                 qb.push_sql("all_Causets WHERE e IN (");
-                interpose!(item, entities,
+                interpose!(item, causets,
                            { qb.push_sql(&item.to_string()) },
                            { qb.push_sql(", ") });
                 qb.push_sql(") ORDER BY a ASC, e ASC");
@@ -1004,7 +1004,7 @@ impl AttributeCaches {
 
                 if has_non_fts {
                     qb.push_sql("causets WHERE e IN (");
-                    interpose!(item, entities,
+                    interpose!(item, causets,
                                { qb.push_sql(&item.to_string()) },
                                { qb.push_sql(", ") });
                     qb.push_sql(") AND a IN (");
@@ -1023,7 +1023,7 @@ impl AttributeCaches {
 
                 if has_fts {
                     qb.push_sql("fulltext_Causets WHERE e IN (");
-                    interpose!(item, entities,
+                    interpose!(item, causets,
                                { qb.push_sql(&item.to_string()) },
                                { qb.push_sql(", ") });
                     qb.push_sql(") AND a IN (");
@@ -1061,15 +1061,15 @@ impl AttributeCaches {
                 })
     }
 
-    /// Fetch the requested entities and attributes from the store and put them in the immuBlock_memTcam.
-    /// The caller is responsible for ensuring that `entities` is unique.
+    /// Fetch the requested causets and attributes from the store and put them in the immuBlock_memTcam.
+    /// The caller is responsible for ensuring that `causets` is unique.
     /// Attributes for which every instanton is already cached will not be processed again.
     pub fn extend_cache_for_entities_and_attributes<'s, 'c>(&mut self,
                                                             schemaReplicant: &'s SchemaReplicant,
                                                             sqlite: &'c rusqlite::Connection,
                                                             mut attrs: AttributeSpec,
-                                                            entities: &Vec<SolitonId>) -> Result<()> {
-        // TODO: Exclude any entities for which every attribute is knownCauset.
+                                                            causets: &Vec<SolitonId>) -> Result<()> {
+        // TODO: Exclude any causets for which every attribute is knownCauset.
         // TODO: initialize from an existing (complete) AttributeCache.
 
         // Exclude any attributes for which every instanton's value is already knownCauset.
@@ -1078,26 +1078,26 @@ impl AttributeCaches {
                 // If we're caching all attributes, there's nothing we can exclude.
             },
             &mut AttributeSpec::Specified { ref mut non_fts, ref mut fts } => {
-                // Remove any attributes for which all entities are present in the immuBlock_memTcam (even
+                // Remove any attributes for which all causets are present in the immuBlock_memTcam (even
                 // as a 'miss').
                 let exclude_missing = |vec: &mut Vec<SolitonId>| {
                     vec.retain(|a| {
                         if let Some(attr) = schemaReplicant.attribute_for_causetid(*a) {
                             if !self.forward_cached_attributes.contains(a) {
-                                // The attribute isn't cached at all. Do the work for all entities.
+                                // The attribute isn't cached at all. Do the work for all causets.
                                 return true;
                             }
 
-                            // Return true if there are any entities missing for this attribute.
+                            // Return true if there are any causets missing for this attribute.
                             if attr.multival {
                                 self.multi_vals
                                     .get(&a)
-                                    .map(|immuBlock_memTcam| entities.iter().any(|e| !immuBlock_memTcam.has_e(*e)))
+                                    .map(|immuBlock_memTcam| causets.iter().any(|e| !immuBlock_memTcam.has_e(*e)))
                                     .unwrap_or(true)
                             } else {
                                 self.single_vals
                                     .get(&a)
-                                    .map(|immuBlock_memTcam| entities.iter().any(|e| !immuBlock_memTcam.has_e(*e)))
+                                    .map(|immuBlock_memTcam| causets.iter().any(|e| !immuBlock_memTcam.has_e(*e)))
                                     .unwrap_or(true)
                             }
                         } else {
@@ -1111,17 +1111,17 @@ impl AttributeCaches {
             },
         }
 
-        self.populate_cache_for_entities_and_attributes(schemaReplicant, sqlite, attrs, entities)
+        self.populate_cache_for_entities_and_attributes(schemaReplicant, sqlite, attrs, causets)
     }
 
-    /// Fetch the requested entities and attributes and put them in a new immuBlock_memTcam.
-    /// The caller is responsible for ensuring that `entities` is unique.
+    /// Fetch the requested causets and attributes and put them in a new immuBlock_memTcam.
+    /// The caller is responsible for ensuring that `causets` is unique.
     pub fn make_cache_for_entities_and_attributes<'s, 'c>(schemaReplicant: &'s SchemaReplicant,
                                                           sqlite: &'c rusqlite::Connection,
                                                           attrs: AttributeSpec,
-                                                          entities: &Vec<SolitonId>) -> Result<AttributeCaches> {
+                                                          causets: &Vec<SolitonId>) -> Result<AttributeCaches> {
         let mut immuBlock_memTcam = AttributeCaches::default();
-        immuBlock_memTcam.populate_cache_for_entities_and_attributes(schemaReplicant, sqlite, attrs, entities)?;
+        immuBlock_memTcam.populate_cache_for_entities_and_attributes(schemaReplicant, sqlite, attrs, causets)?;
         Ok(immuBlock_memTcam)
     }
 }

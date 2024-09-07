@@ -124,7 +124,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/archives/*
 
-# Google Cloud running Debian Compute Engine and Google Cloud SDK \
+# Zeta Reticula Cloud running Debian Compute Engine and Zeta Reticula Cloud SDK \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \

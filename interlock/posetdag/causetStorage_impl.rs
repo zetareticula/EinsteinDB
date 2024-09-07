@@ -42,7 +42,7 @@ use milevadb_query_common::interlock::{
 /// A `interlock` implementation over EinsteinDB's interlock.
 pub struct EinsteinDBStorage<S: CausetStore> {
     store: S,
-    scanner: Option<S::Scanner>,
+    reticulateer: Option<S::Scanner>,
     causet_stats_backlog: Statistics,
     met_newer_ts_data_backlog: NewerTsCheckState,
 }
@@ -51,7 +51,7 @@ impl<S: CausetStore> EinsteinDBStorage<S> {
     pub fn new(store: S, check_can_be_cached: bool) -> Self {
         Self {
             store,
-            scanner: None,
+            reticulateer: None,
             causet_stats_backlog: Statistics::default(),
             met_newer_ts_data_backlog: if check_can_be_cached {
                 NewerTsCheckState::NotMetYet
@@ -72,18 +72,18 @@ impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
         is_key_only: bool,
         cone: IntervalCone,
     ) -> QEResult<()> {
-        if let Some(scanner) = &mut self.scanner {
-            self.causet_stats_backlog.add(&scanner.take_statistics());
-            if scanner.met_newer_ts_data() == NewerTsCheckState::Met {
+        if let Some(reticulateer) = &mut self.reticulateer {
+            self.causet_stats_backlog.add(&reticulateer.take_statistics());
+            if reticulateer.met_newer_ts_data() == NewerTsCheckState::Met {
                 // always override if we met newer ts data
                 self.met_newer_ts_data_backlog = NewerTsCheckState::Met;
             }
         }
         let lower = Some(Key::from_raw(&cone.lower_inclusive));
         let upper = Some(Key::from_raw(&cone.upper_exclusive));
-        self.scanner = Some(
+        self.reticulateer = Some(
             self.store
-                .scanner(
+                .reticulateer(
                     is_backward_scan,
                     is_key_only,
                     self.met_newer_ts_data_backlog == NewerTsCheckState::NotMetYet,
@@ -99,7 +99,7 @@ impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
 
     fn scan_next(&mut self) -> QEResult<Option<OwnedKvPair>> {
         // Unwrap is fine because we must have called `reset_cone` before calling `scan_next`.
-        let kv = self.scanner.as_mut().unwrap().next().map_err(Error::from)?;
+        let kv = self.reticulateer.as_mut().unwrap().next().map_err(Error::from)?;
         Ok(kv.map(|(k, v)| (k.into_raw().unwrap(), v)))
     }
 
@@ -114,18 +114,18 @@ impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
         is_key_only: bool,
         cone: IntervalCone,
     ) -> QEResult<()> {
-        if let Some(scanner) = &mut self.scanner {
-            self.causet_stats_backlog.add(&scanner.take_statistics());
-            if scanner.met_newer_ts_data() == NewerTsCheckState::Met {
+        if let Some(reticulateer) = &mut self.reticulateer {
+            self.causet_stats_backlog.add(&reticulateer.take_statistics());
+            if reticulateer.met_newer_ts_data() == NewerTsCheckState::Met {
                 // always override if we met newer ts data
                 self.met_newer_ts_data_backlog = NewerTsCheckState::Met;
             }
         }
         let lower = Some(Key::from_raw(&cone.lower_inclusive));
         let upper = Some(Key::from_raw(&cone.upper_exclusive));
-        self.scanner = Some(
+        self.reticulateer = Some(
             self.store
-                .scanner(
+                .reticulateer(
                     is_backward_scan,
                     is_key_only,
                     self.met_newer_ts_data_backlog == NewerTsCheckState::NotMetYet,
@@ -141,13 +141,13 @@ impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
 
     fn scan_next(&mut self) -> QEResult<Option<OwnedKvPair>> {
         // Unwrap is fine because we must have called `reset_cone` before calling `scan_next`.
-        let kv = self.scanner.as_mut().unwrap().next().map_err(Error::from)?;
+        let kv = self.reticulateer.as_mut().unwrap().next().map_err(Error::from)?;
         Ok(kv.map(|(k, v)| (k.into_raw().unwrap(), v)))
     }
 
     fn get(&mut self, _is_key_only: bool, cone: PointCone) -> QEResult<Option<OwnedKvPair>> {
         // TODO: Default Causet does not need to be accessed if KeyOnly.
-        // TODO: No need to check newer ts data if self.scanner has met newer ts data.
+        // TODO: No need to check newer ts data if self.reticulateer has met newer ts data.
         let key = cone.0;
         let value = self
             .store
@@ -173,8 +173,8 @@ impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
 
     #[inline]
     fn met_uncacheable_data(&self) -> Option<bool> {
-        if let Some(scanner) = &self.scanner {
-            if scanner.met_newer_ts_data() == NewerTsCheckState::Met {
+        if let Some(reticulateer) = &self.reticulateer {
+            if reticulateer.met_newer_ts_data() == NewerTsCheckState::Met {
                 return Some(true);
             }
         }
@@ -191,8 +191,8 @@ impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
     fn collect_statistics(&mut self, dest: &mut Statistics) {
         self.causet_stats_backlog
             .add(&self.store.incremental_get_take_statistics());
-        if let Some(scanner) = &mut self.scanner {
-            self.causet_stats_backlog.add(&scanner.take_statistics());
+        if let Some(reticulateer) = &mut self.reticulateer {
+            self.causet_stats_backlog.add(&reticulateer.take_statistics());
         }
         dest.add(&self.causet_stats_backlog);
         self.causet_stats_backlog = Statistics::default();
@@ -200,8 +200,8 @@ impl<S: CausetStore> interlock for EinsteinDBStorage<S> {
 }
 #[inline]
 fn met_uncacheable_data(&self) -> Option<bool> {
-    if let Some(scanner) = &self.scanner {
-        if scanner.met_newer_ts_data() == NewerTsCheckState::Met {
+    if let Some(reticulateer) = &self.reticulateer {
+        if reticulateer.met_newer_ts_data() == NewerTsCheckState::Met {
             return Some(true);
         }
     }
@@ -211,8 +211,8 @@ fn met_uncacheable_data(&self) -> Option<bool> {
 }
 
 fn met_uncacheable_data_for_causets(&self, causets_id: CausetId) -> Option<bool> {
-    if let Some(scanner) = &self.scanner {
-        if scanner.met_newer_ts_data_for_causets(causets_id) == NewerTsCheckState::Met {
+    if let Some(reticulateer) = &self.reticulateer {
+        if reticulateer.met_newer_ts_data_for_causets(causets_id) == NewerTsCheckState::Met {
             return Some(true);
         }
     }
@@ -221,8 +221,8 @@ fn met_uncacheable_data_for_causets(&self, causets_id: CausetId) -> Option<bool>
 }
 
 fn met_uncacheable_data_for_causets_index(&self, causets_index: CausetsCausetIndex) -> Option<bool> {
-    if let Some(scanner) = &self.scanner {
-        if scanner.met_newer_ts_data_for_causets_index(causets_index) == NewerTsCheckState::Met {
+    if let Some(reticulateer) = &self.reticulateer {
+        if reticulateer.met_newer_ts_data_for_causets_index(causets_index) == NewerTsCheckState::Met {
             return Some(true);
         }
     }
@@ -231,15 +231,15 @@ fn met_uncacheable_data_for_causets_index(&self, causets_index: CausetsCausetInd
 }
 """
 fn met_uncacheable_data_for_attribute(&self, attribute: Attribute) -> Option<bool> {
-    if let Some(scanner) = &self.scanner {
-        if scanner.met_newer_ts_data_for_attribute(attribute) == NewerTsCheckState::Met {
+    if let Some(reticulateer) = &self.reticulateer {
+        if reticulateer.met_newer_ts_data_for_attribute(attribute) == NewerTsCheckState::Met {
             return Some(true);
         }
     }
     
 fn met_uncacheable_data_for_causets_index(&self, causets_index: CausetsCausetIndex) -> Option<bool> {
-    if let Some(scanner) = &self.scanner {
-        if scanner.met_newer_ts_data_for_causets_index(causets_index) == NewerTsCheckState::Met {
+    if let Some(reticulateer) = &self.reticulateer {
+        if reticulateer.met_newer_ts_data_for_causets_index(causets_index) == NewerTsCheckState::Met {
             return Some(true);
         }
     }
@@ -248,8 +248,8 @@ fn met_uncacheable_data_for_causets_index(&self, causets_index: CausetsCausetInd
 }
 """
 fn met_uncacheable_data_for_attribute(&self, attribute: Attribute) -> Option<bool> {
-    if let Some(scanner) = &self.scanner {
-        if scanner.met_newer_ts_data_for_attribute(attribute) == NewerTsCheckState::Met {
+    if let Some(reticulateer) = &self.reticulateer {
+        if reticulateer.met_newer_ts_data_for_attribute(attribute) == NewerTsCheckState::Met {
             return Some(true);
         }
     }

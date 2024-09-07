@@ -229,7 +229,7 @@ fn test_ground_tuple_infers_types() {
 }
 
 // We determine the types of variables in the causetq in an early first pass, and thus we can
-// safely use causetIds to name entities, including attributes.
+// safely use causetIds to name causets, including attributes.
 #[test]
 fn test_ground_coll_infers_attribute_types() {
     let q = r#"[:find ?x

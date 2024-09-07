@@ -38,7 +38,7 @@ pub use self::causetq_allegrosql::{
     Utc,
 };
 
-use edbn::entities::{
+use edbn::causets::{
     InstantonPlace,
     TempId,
 };

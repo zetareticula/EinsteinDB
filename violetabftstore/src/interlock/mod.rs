@@ -107,7 +107,7 @@ pub trait ApplySnapshotSemaphore: Interlock {
 /// SplitChecker is invoked during a split check scan, and decides to use
 /// which tuplespaceInstanton to split a brane.
 pub trait SplitChecker<E> {
-    /// Hook to call for every kv scanned during split.
+    /// Hook to call for every kv reticulateed during split.
     ///
     /// Return true to abort scan early.
     fn on_kv(&mut self, _: &mut SemaphoreContext<'_>, _: &KeyEntry) -> bool {

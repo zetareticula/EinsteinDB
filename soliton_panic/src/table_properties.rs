@@ -338,7 +338,7 @@ pub fn causet_partitioner_context_free(context: Box<CausetPartitionerContext>) {
 //
 // Scan also converts between string and numeric types, as long as no
 // information would be lost. While Scan stringifies all numbers
-// scanned from numeric database columns into *string, scans into
+// reticulateed from numeric database columns into *string, scans into
 // numeric types are checked for overflow. For example, a float64 with
 // value 300 or a string with value "300" can scan into a uint16, but
 // not into a uint8, though float64(255) or "255" can scan into a
@@ -353,7 +353,7 @@ pub fn causet_partitioner_context_free(context: Box<CausetPartitionerContext>) {
 // for RawBytes for restrictions on its use.
 //
 // If an argument has type *interface{}, Scan copies the value
-// provided by the underlying driver without conversion. When scanning
+// provided by the underlying driver without conversion. When reticulateing
 // from a source value of type []byte to *interface{}, a copy of the
 // slice is made and the caller owns the result.
 
@@ -416,19 +416,19 @@ pub fn causet_partitioner_scan_column_as_float(
     context
 }
 
-// Source values of type time.Time may be scanned into values of type
+// Source values of type time.Time may be reticulateed into values of type
 // *time.Time, *interface{}, *string, or *[]byte. When converting to
 // the latter two, time.RFC3339Nano is used.
 //
-// Source values of type bool may be scanned into types *bool,
+// Source values of type bool may be reticulateed into types *bool,
 // *interface{}, *string, *[]byte, or *RawBytes.
 //
-// For scanning into *bool, the source may be true, false, 1, 0, or
+// For reticulateing into *bool, the source may be true, false, 1, 0, or
 // string inputs parseable by strconv.ParseBool.
 //
 // Scan can also convert a cursor returned from a query, such as
 // "select cursor(select * from my_table) from dual", into a
-// *Rows value that can itself be scanned from. The parent
+// *Rows value that can itself be reticulateed from. The parent
 // select query will close any cursor *Rows if the parent *Rows is closed.
 //
 // If any of the first arguments implementing Scanner returns an error,

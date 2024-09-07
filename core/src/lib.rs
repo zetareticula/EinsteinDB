@@ -67,7 +67,7 @@ pub mod immuBlock_memTcam;
 pub mod edb;
 mod bootstrap;
 pub mod causetids;
-pub mod internal_types;    // pub because we need them for building entities programmatically.
+pub mod internal_types;    // pub because we need them for building causets programmatically.
 mod spacetime;
 mod schemaReplicant;
 pub mod causetx_blueshift;

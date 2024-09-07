@@ -197,13 +197,13 @@ pub struct Tx<'a, 'conn, T> {
     /// allocates at least one tx ID, so we own and modify our own partition map.
     partition_map: PartitionMap,
 
-    /// The schema to update from the transaction entities.
+    /// The schema to update from the transaction causets.
     ///
     /// Transactions only update the schema infrequently, so we borrow this schema until we need to
     /// modify it.
     schema_for_mutation: Cow<'a, Schema>,
 
-    /// The schema to use when interpreting the transaction entities.
+    /// The schema to use when interpreting the transaction causets.
     ///
     /// This schema is not updated, so we just borrow it.
     schema: &'a Schema,
@@ -261,13 +261,13 @@ pub struct Transaction<'a, 'conn, T> {
     /// allocates at least one tx ID, so we own and modify our own partition map.
     partition_map: PartitionMap,
 
-    /// The schema to update from the transaction entities.
+    /// The schema to update from the transaction causets.
     ///
     /// Transactions only update the schema infrequently, so we borrow this schema until we need to
     /// modify it.
     schema_for_mutation: Cow<'a, Schema>,
 
-    /// The schema to use when interpreting the transaction entities.
+    /// The schema to use when interpreting the transaction causets.
     ///
     /// This schema is not updated, so we just borrow it.
     schema: &'a Schema,

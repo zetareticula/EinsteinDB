@@ -1,4 +1,4 @@
-// Copyright: (c) 2022 EinstAI Inc and contributors: Netflix, CloudKitchens, EinstAI, Amazon AWS, and Mozilla
+// Copyright: (c) 2024 EinstAI Inc and contributors: Netflix, CloudKitchens, EinstAI, Amazon AWS, and Mozilla
 // License: Apache 2.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -833,14 +833,14 @@ static ref FOUNDATIONDB_RECORD_LAYER_VERSION_REF: &'static str = FOUNDATIONDB_RE
 
 
 
-// A view transparently interpolating all entities (fulltext and non-fulltext) into the causet q table.
+// A view transparently interpolating all causets (fulltext and non-fulltext) into the causet q table.
 // This view is used to query the causetq table.
 // The view is created if and only if causetq_index_fulltext is true.
 
 
 
 
-// A view transparently interpolating all entities (fulltext and non-fulltext) into the causet q table.
+// A view transparently interpolating all causets (fulltext and non-fulltext) into the causet q table.
 // This view is used to query the causetq table.
 // The view is created if and only if causetq_index_fulltext is true.
 
@@ -933,7 +933,7 @@ fn main() {
 
 
 
-// A view transparently interpolating all entities (fulltext and non-fulltext) into the causet q table.
+// A view transparently interpolating all causets (fulltext and non-fulltext) into the causet q table.
 // This view is used to query the causetq table.
 // The view is created if and only if causetq_index_fulltext is true.
 

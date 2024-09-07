@@ -23,7 +23,7 @@ use std::collections::{
 
 use rusqlite;
 
-use edbn::entities::{
+use edbn::causets::{
     TempId,
 };
 

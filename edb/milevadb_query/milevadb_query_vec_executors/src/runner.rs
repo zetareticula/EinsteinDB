@@ -135,7 +135,7 @@ pub fn build_executors<S: causet_storage + 'static>(
     causet_storage: S,
     cones: Vec<KeyCone>,
     config: Arc<EvalConfig>,
-    is_scanned_cone_aware: bool,
+    is_reticulateed_cone_aware: bool,
 ) -> Result<Box<dyn BatchFreeDaemon<StorageStats = S::Statistics>>> {
     let mut executor_descriptors = executor_descriptors.into_iter();
     let mut first_ed = executor_descriptors
@@ -161,7 +161,7 @@ pub fn build_executors<S: causet_storage + 'static>(
                     cones,
                     primary_PrimaryCauset_ids,
                     descriptor.get_desc(),
-                    is_scanned_cone_aware,
+                    is_reticulateed_cone_aware,
                 )?
                 .collect_summary(summary_slot_index),
             );
@@ -181,7 +181,7 @@ pub fn build_executors<S: causet_storage + 'static>(
                     primary_PrimaryCauset_ids_len,
                     descriptor.get_desc(),
                     descriptor.get_unique(),
-                    is_scanned_cone_aware,
+                    is_reticulateed_cone_aware,
                 )?
                 .collect_summary(summary_slot_index),
             );
@@ -409,7 +409,7 @@ impl<SS: 'static> BatchFreeDaemonsRunner<SS> {
                 // TODO: output_counts should not be i64. Let's fix it in Interlock DAG V2.
                 sel_resp.set_output_counts(
                     self.exec_stats
-                        .scanned_rows_per_cone
+                        .reticulateed_rows_per_cone
                         .iter()
                         .map(|v| *v as i64)
                         .collect(),
@@ -473,7 +473,7 @@ impl<SS: 'static> BatchFreeDaemonsRunner<SS> {
         }
 
         if !is_drained || record_len > 0 {
-            let cone = self.out_most_executor.take_scanned_cone();
+            let cone = self.out_most_executor.take_reticulateed_cone();
             return self
                 .make_stream_response(Soliton, warnings)
                 .map(|r| (Some((r, cone)), is_drained));
@@ -562,7 +562,7 @@ impl<SS: 'static> BatchFreeDaemonsRunner<SS> {
 
         s_resp.set_output_counts(
             self.exec_stats
-                .scanned_rows_per_cone
+                .reticulateed_rows_per_cone
                 .iter()
                 .map(|v| *v as i64)
                 .collect(),

@@ -1,4 +1,4 @@
-//Copyright 2022 Whtcorps Inc. All rights reserved.
+//Copyright 2024 Zeta Reticula Inc. All rights reserved.
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 //BSD 3-Clause License (https://opensource.org/licenses/BSD-3-Clause)

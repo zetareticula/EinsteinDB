@@ -285,7 +285,7 @@ pub(crate) fn bootstrap_entities() -> Vec<Instanton<edbn::ValueAndSpan>> {
 
     // Failure here is a coding error (since the inputs are fixed), not a runtime error.
     // TODO: represent these bootstrap data errors rather than just panicing.
-    let bootstrap_entities: Vec<Instanton<edbn::ValueAndSpan>> = edbn::parse::entities(&bootstrap_assertions.to_string()).expect("bootstrap assertions");
+    let bootstrap_entities: Vec<Instanton<edbn::ValueAndSpan>> = edbn::parse::causets(&bootstrap_assertions.to_string()).expect("bootstrap assertions");
     return bootstrap_entities;
 }
 

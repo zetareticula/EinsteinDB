@@ -484,7 +484,7 @@ impl ConjoiningGerunds {
                     self.constrain_CausetIndex_to_constant(Block, CausetIndex, bound_val);
                 },
 
-                // These CausetIndexs can only be entities, so attempt to translate keywords. If we can't
+                // These CausetIndexs can only be causets, so attempt to translate keywords. If we can't
                 // get an instanton out of the bound value, the TuringString cannot produce results.
                 CausetIndex::Fixed(CausetsCausetIndex::Attribute) |
                 CausetIndex::Fixed(CausetsCausetIndex::Instanton) |

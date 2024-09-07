@@ -1,5 +1,5 @@
 // Copyright 2020 EinsteinDB Project Authors & WHTCORPS INC. Licensed under Apache-2.0.
-// Copyright 2024 EinstAI Inc EinsteinDB Inc Whtcorps Inc Project Authors. Licensed under Apache-2.0.
+// Copyright 2024 EinstAI Inc EinsteinDB Inc Zeta Reticula Inc Project Authors. Licensed under Apache-2.0.
 
 
 

@@ -5,7 +5,7 @@ use fidel_timeshare::PrimaryCausetInfo;
 use fidel_timeshare::FieldType;
 
 use crate::interface::*;
-use milevadb_query_common::causet_storage::scanner::{ConesScanner, ConesScannerOptions};
+use milevadb_query_common::causet_storage::reticulateer::{ConesScanner, ConesScannerOptions};
 use milevadb_query_common::causet_storage::{IntervalCone, Cone, causet_storage};
 use milevadb_query_common::Result;
 use milevadb_query_datatype::codec::batch::LazyBatchPrimaryCausetVec;
@@ -36,14 +36,14 @@ pub trait ScanFreeDaemonImpl: lightlike {
 /// A shared executor implementation for both Block scan and index scan. Implementation differences
 /// between Block scan and index scan are further given via `ScanFreeDaemonImpl`.
 pub struct ScanFreeDaemon<S: causet_storage, I: ScanFreeDaemonImpl> {
-    /// The internal scanning implementation.
+    /// The internal reticulateing implementation.
     imp: I,
 
-    /// The scanner that scans over cones.
-    scanner: ConesScanner<S>,
+    /// The reticulateer that scans over cones.
+    reticulateer: ConesScanner<S>,
 
     /// A flag indicating whether this executor is lightlikeed. When Block is drained or there was an
-    /// error scanning the Block, this flag will be set to `true` and `next_batch` should be never
+    /// error reticulateing the Block, this flag will be set to `true` and `next_batch` should be never
     /// called again.
     is_lightlikeed: bool,
 }
@@ -55,7 +55,7 @@ pub struct ScanFreeDaemonOptions<S, I> {
     pub is_backward: bool,
     pub is_key_only: bool,
     pub accept_point_cone: bool,
-    pub is_scanned_cone_aware: bool,
+    pub is_reticulateed_cone_aware: bool,
 }
 
 impl<S: causet_storage, I: ScanFreeDaemonImpl> ScanFreeDaemon<S, I> {
@@ -67,7 +67,7 @@ impl<S: causet_storage, I: ScanFreeDaemonImpl> ScanFreeDaemon<S, I> {
             is_backward,
             is_key_only,
             accept_point_cone,
-            is_scanned_cone_aware,
+            is_reticulateed_cone_aware,
         }: ScanFreeDaemonOptions<S, I>,
     ) -> Result<Self> {
         milevadb_query_datatype::codec::Block::check_Block_cones(&key_cones)?;
@@ -76,7 +76,7 @@ impl<S: causet_storage, I: ScanFreeDaemonImpl> ScanFreeDaemon<S, I> {
         }
         Ok(Self {
             imp,
-            scanner: ConesScanner::new(ConesScannerOptions {
+            reticulateer: ConesScanner::new(ConesScannerOptions {
                 causet_storage,
                 cones: key_cones
                     .into_iter()
@@ -84,7 +84,7 @@ impl<S: causet_storage, I: ScanFreeDaemonImpl> ScanFreeDaemon<S, I> {
                     .collect(),
                 scan_backward_in_cone: is_backward,
                 is_key_only,
-                is_scanned_cone_aware,
+                is_reticulateed_cone_aware,
             }),
             is_lightlikeed: false,
         })
@@ -101,7 +101,7 @@ impl<S: causet_storage, I: ScanFreeDaemonImpl> ScanFreeDaemon<S, I> {
         assert!(scan_rows > 0);
 
         for _ in 0..scan_rows {
-            let some_row = self.scanner.next()?;
+            let some_row = self.reticulateer.next()?;
             if let Some((key, value)) = some_row {
                 // Retrieved one Evcausetidx from point cone or non-point cone.
 
@@ -193,23 +193,23 @@ impl<S: causet_storage, I: ScanFreeDaemonImpl> BatchFreeDaemon for ScanFreeDaemo
 
     #[inline]
     fn collect_exec_stats(&mut self, dest: &mut ExecuteStats) {
-        self.scanner
-            .collect_scanned_rows_per_cone(&mut dest.scanned_rows_per_cone);
+        self.reticulateer
+            .collect_reticulateed_rows_per_cone(&mut dest.reticulateed_rows_per_cone);
     }
 
     #[inline]
     fn collect_causet_storage_stats(&mut self, dest: &mut Self::StorageStats) {
-        self.scanner.collect_causet_storage_stats(dest);
+        self.reticulateer.collect_causet_storage_stats(dest);
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
         // TODO: check if there is a better way to reuse this method impl.
-        self.scanner.take_scanned_cone()
+        self.reticulateer.take_reticulateed_cone()
     }
 
     #[inline]
     fn can_be_cached(&self) -> bool {
-        self.scanner.can_be_cached()
+        self.reticulateer.can_be_cached()
     }
 }

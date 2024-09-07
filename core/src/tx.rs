@@ -16,7 +16,7 @@
 //! The impleedbion proceeds in four main stages, labeled "Pipeline stage 1" through "Pipeline
 //! stage 4".  _Pipeline_ may be a misnomer, since the stages as written **cannot** be interleaved
 //! in parallel.  That is, a single transacted instanton cannot flow through all the stages without its
-//! sibling entities.
+//! sibling causets.
 //!
 //! This unintuitive architectural decision was made because the second and third stages (resolving
 //! lookup refs and tempids, respectively) operate _in bulk_ to minimize the number of expensive
@@ -106,8 +106,8 @@ use causetq_allegrosql::{
     Utc,
 };
 
-use edbn::entities as entmod;
-use edbn::entities::{
+use edbn::causets as entmod;
+use edbn::causets::{
     AttributePlace,
     Instanton,
     OpType,
@@ -160,13 +160,13 @@ pub struct Tx<'conn, 'a, W> where W: TransactWatcher {
     /// allocates at least one causetx ID, so we own and modify our own partition map.
     partition_map: PartitionMap,
 
-    /// The schemaReplicant to update from the transaction entities.
+    /// The schemaReplicant to update from the transaction causets.
     ///
     /// bundles only update the schemaReplicant infrequently, so we borrow this schemaReplicant until we need to
     /// modify it.
     schemaReplicant_for_mutation: Cow<'a, SchemaReplicant>,
 
-    /// The schemaReplicant to use when interpreting the transaction entities.
+    /// The schemaReplicant to use when interpreting the transaction causets.
     ///
     /// This schemaReplicant is not updated, so we just borrow it.
     schemaReplicant: &'a SchemaReplicant,
@@ -268,7 +268,7 @@ impl<'conn, 'a, W> Tx<'conn, 'a, W> where W: TransactWatcher {
     ///
     /// The `Term` instances produce share interned TempId and LookupRef handles, and we return the
     /// interned handle sets so that consumers can ensure all handles are used appropriately.
-    fn entities_into_terms_with_temp_ids_and_lookup_refs<I, V: TransacBlockValue>(&self, entities: I) -> Result<(Vec<TermWithTempIdsAndLookupRefs>, InternSet<TempId>, InternSet<AVPair>)> where I: IntoIterator<Item=Instanton<V>> {
+    fn entities_into_terms_with_temp_ids_and_lookup_refs<I, V: TransacBlockValue>(&self, causets: I) -> Result<(Vec<TermWithTempIdsAndLookupRefs>, InternSet<TempId>, InternSet<AVPair>)> where I: IntoIterator<Item=Instanton<V>> {
         struct InProcess<'a> {
             partition_map: &'a PartitionMap,
             schemaReplicant: &'a SchemaReplicant,
@@ -422,11 +422,11 @@ impl<'conn, 'a, W> Tx<'conn, 'a, W> where W: TransactWatcher {
 
         let mut in_process = InProcess::with_schemaReplicant_and_partition_map(&self.schemaReplicant, &self.partition_map, KnownSolitonId(self.causecausetx_id));
 
-        // We want to handle entities in the order they're given to us, while also "exploding" some
-        // entities into many.  We therefore push the initial entities onto the back of the deque,
+        // We want to handle causets in the order they're given to us, while also "exploding" some
+        // causets into many.  We therefore push the initial causets onto the back of the deque,
         // take from the front of the deque, and explode onto the front as well.
         let mut deque: VecDeque<Instanton<V>> = VecDeque::default();
-        deque.extend(entities);
+        deque.extend(causets);
 
         let mut terms: Vec<TermWithTempIdsAndLookupRefs> = Vec::with_capacity(deque.len());
 
@@ -546,14 +546,14 @@ impl<'conn, 'a, W> Tx<'conn, 'a, W> where W: TransactWatcher {
                                 let edb_id: entmod::InstantonPlace<V> = edb_id.unwrap_or_else(|| in_process.allocate_edb_id());
 
                                 // We're nested, so we want to ensure we're not creating "dangling"
-                                // entities that can't be reached.  If we're :edb/isComponent, then this
+                                // causets that can't be reached.  If we're :edb/isComponent, then this
                                 // is not dangling.  Otherwise, the resulting map needs to have a
                                 // :edb/unique :edb.unique/causetIdity [a v] pair, so that it's reachable.
                                 // Per http://docs.Causetic.com/bundles.html: "Either the reference
                                 // to the nested map must be a component attribute, or the nested map
                                 // must include a unique attribute. This constraint prevents the
-                                // acccausetIdal creation of easily-orphaned entities that have no causetIdity
-                                // or relation to other entities."
+                                // acccausetIdal creation of easily-orphaned causets that have no causetIdity
+                                // or relation to other causets."
                                 if attribute.component {
                                     dangling = false;
                                 }
@@ -621,14 +621,14 @@ impl<'conn, 'a, W> Tx<'conn, 'a, W> where W: TransactWatcher {
         }).collect::<Result<Vec<_>>>()
     }
 
-    /// Transact the given `entities` against the store.
+    /// Transact the given `causets` against the store.
     ///
     /// This approach is explained in https://github.com/whtcorpsinc/edb/wiki/Transacting.
     // TODO: move this to the transactor layer.
-    pub fn transact_entities<I, V: TransacBlockValue>(&mut self, entities: I) -> Result<TxReport>
+    pub fn transact_entities<I, V: TransacBlockValue>(&mut self, causets: I) -> Result<TxReport>
     where I: IntoIterator<Item=Instanton<V>> {
-        // Pipeline stage 1: entities -> terms with tempids and lookup refs.
-        let (terms_with_temp_ids_and_lookup_refs, tempid_set, lookup_ref_set) = self.entities_into_terms_with_temp_ids_and_lookup_refs(entities)?;
+        // Pipeline stage 1: causets -> terms with tempids and lookup refs.
+        let (terms_with_temp_ids_and_lookup_refs, tempid_set, lookup_ref_set) = self.entities_into_terms_with_temp_ids_and_lookup_refs(causets)?;
 
         // Pipeline stage 2: resolve lookup refs -> terms with tempids.
         let lookup_ref_avs: Vec<&(i64, MinkowskiType)> = lookup_ref_set.iter().map(|rc| &**rc).collect();
@@ -751,7 +751,7 @@ impl<'conn, 'a, W> Tx<'conn, 'a, W> where W: TransactWatcher {
         // Assertions that are :edb.cardinality/many and :edb.fulltext.
         let mut fts_many: Vec<edb::ReducedInstanton> = vec![];
 
-        // We need to ensure that callers can't blindly transact entities that haven't been
+        // We need to ensure that callers can't blindly transact causets that haven't been
         // allocated by this store.
 
         let errors = causetx_redshift::type_disagreements(&aev_trie);
@@ -874,7 +874,7 @@ where W: TransactWatcher {
     Ok((report, causetx.partition_map, next_schemaReplicant, causetx.watcher))
 }
 
-/// Transact the given `entities` against the given SQLite `conn`, using the given spacetime.
+/// Transact the given `causets` against the given SQLite `conn`, using the given spacetime.
 /// If you want this work to occur inside a SQLite transaction, establish one on the connection
 /// prior to calling this function.
 ///
@@ -885,13 +885,13 @@ pub fn transact<'conn, 'a, I, V, W>(conn: &'conn rusqlite::Connection,
                                  schemaReplicant_for_mutation: &'a SchemaReplicant,
                                  schemaReplicant: &'a SchemaReplicant,
                                  watcher: W,
-                                 entities: I) -> Result<(TxReport, PartitionMap, Option<SchemaReplicant>, W)>
+                                 causets: I) -> Result<(TxReport, PartitionMap, Option<SchemaReplicant>, W)>
     where I: IntoIterator<Item=Instanton<V>>,
           V: TransacBlockValue,
           W: TransactWatcher {
 
     let mut causetx = start_causecausetx(conn, partition_map, schemaReplicant_for_mutation, schemaReplicant, watcher)?;
-    let report = causetx.transact_entities(entities)?;
+    let report = causetx.transact_entities(causets)?;
     conclude_causecausetx(causetx, report)
 }
 

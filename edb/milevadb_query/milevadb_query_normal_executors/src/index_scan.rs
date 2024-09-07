@@ -76,7 +76,7 @@ impl<S: causet_storage> IndexScanFreeDaemon<S> {
         key_cones: Vec<KeyCone>,
         causet_storage: S,
         unique: bool,
-        is_scanned_cone_aware: bool,
+        is_reticulateed_cone_aware: bool,
     ) -> Result<Self> {
         let PrimaryCausets = meta.get_PrimaryCausets().to_vec();
         let inner = IndexInnerFreeDaemon::new(&mut meta);
@@ -89,7 +89,7 @@ impl<S: causet_storage> IndexScanFreeDaemon<S> {
             is_backward: meta.get_desc(),
             is_key_only: false,
             accept_point_cone: unique,
-            is_scanned_cone_aware,
+            is_reticulateed_cone_aware,
         })
     }
 
@@ -113,7 +113,7 @@ impl<S: causet_storage> IndexScanFreeDaemon<S> {
             is_backward: false,
             is_key_only: false,
             accept_point_cone: false,
-            is_scanned_cone_aware: false,
+            is_reticulateed_cone_aware: false,
         })
     }
 }
@@ -275,7 +275,7 @@ pub mod tests {
         );
         wrapper.cones = vec![r1, r2];
 
-        let mut scanner = IndexScanFreeDaemon::index_scan(
+        let mut reticulateer = IndexScanFreeDaemon::index_scan(
             wrapper.scan,
             EvalContext::default(),
             wrapper.cones,
@@ -286,7 +286,7 @@ pub mod tests {
         .unwrap();
 
         for handle in 0..KEY_NUMBER / 2 {
-            let Evcausetidx = scanner.next().unwrap().unwrap().take_origin().unwrap();
+            let Evcausetidx = reticulateer.next().unwrap().unwrap().take_origin().unwrap();
             assert_eq!(Evcausetidx.handle, handle as i64);
             assert_eq!(Evcausetidx.data.len(), wrapper.cols.len());
             let expect_row = &wrapper.data.expect_rows[handle];
@@ -296,7 +296,7 @@ pub mod tests {
                 assert_eq!(expect_row[&cid], v.to_vec());
             }
         }
-        assert!(scanner.next().unwrap().is_none());
+        assert!(reticulateer.next().unwrap().is_none());
     }
 
     #[test]
@@ -334,7 +334,7 @@ pub mod tests {
         ); // point get but miss
         wrapper.cones = vec![r1, r2, r3, r4, r5];
 
-        let mut scanner = IndexScanFreeDaemon::index_scan(
+        let mut reticulateer = IndexScanFreeDaemon::index_scan(
             wrapper.scan,
             EvalContext::default(),
             wrapper.cones,
@@ -344,7 +344,7 @@ pub mod tests {
         )
         .unwrap();
         for handle in 0..KEY_NUMBER {
-            let Evcausetidx = scanner.next().unwrap().unwrap().take_origin().unwrap();
+            let Evcausetidx = reticulateer.next().unwrap().unwrap().take_origin().unwrap();
             assert_eq!(Evcausetidx.handle, handle as i64);
             assert_eq!(Evcausetidx.data.len(), 2);
             let expect_row = &wrapper.data.expect_rows[handle];
@@ -354,11 +354,11 @@ pub mod tests {
                 assert_eq!(expect_row[&cid], v.to_vec());
             }
         }
-        assert!(scanner.next().unwrap().is_none());
+        assert!(reticulateer.next().unwrap().is_none());
         let expected_counts = vec![1, 3, 1, 5, 0];
         let mut exec_stats = ExecuteStats::new(0);
-        scanner.collect_exec_stats(&mut exec_stats);
-        assert_eq!(expected_counts, exec_stats.scanned_rows_per_cone);
+        reticulateer.collect_exec_stats(&mut exec_stats);
+        assert_eq!(expected_counts, exec_stats.reticulateed_rows_per_cone);
     }
 
     #[test]
@@ -390,7 +390,7 @@ pub mod tests {
         );
         wrapper.cones = vec![r1, r2];
 
-        let mut scanner = IndexScanFreeDaemon::index_scan(
+        let mut reticulateer = IndexScanFreeDaemon::index_scan(
             wrapper.scan,
             EvalContext::default(),
             wrapper.cones,
@@ -402,7 +402,7 @@ pub mod tests {
 
         for tid in 0..KEY_NUMBER {
             let handle = KEY_NUMBER - tid - 1;
-            let Evcausetidx = scanner.next().unwrap().unwrap().take_origin().unwrap();
+            let Evcausetidx = reticulateer.next().unwrap().unwrap().take_origin().unwrap();
             assert_eq!(Evcausetidx.handle, handle as i64);
             assert_eq!(Evcausetidx.data.len(), 2);
             let expect_row = &wrapper.data.expect_rows[handle];
@@ -412,14 +412,14 @@ pub mod tests {
                 assert_eq!(expect_row[&cid], v.to_vec());
             }
         }
-        assert!(scanner.next().unwrap().is_none());
+        assert!(reticulateer.next().unwrap().is_none());
     }
 
     #[test]
     fn test_include_pk() {
         let wrapper = IndexTestWrapper::include_pk_cols();
 
-        let mut scanner = IndexScanFreeDaemon::index_scan(
+        let mut reticulateer = IndexScanFreeDaemon::index_scan(
             wrapper.scan,
             EvalContext::default(),
             wrapper.cones,
@@ -430,7 +430,7 @@ pub mod tests {
         .unwrap();
 
         for handle in 0..KEY_NUMBER {
-            let Evcausetidx = scanner.next().unwrap().unwrap().take_origin().unwrap();
+            let Evcausetidx = reticulateer.next().unwrap().unwrap().take_origin().unwrap();
             assert_eq!(Evcausetidx.handle, handle as i64);
             assert_eq!(Evcausetidx.data.len(), wrapper.cols.len());
             let expect_row = &wrapper.data.expect_rows[handle];
@@ -446,6 +446,6 @@ pub mod tests {
                 assert_eq!(expect_row[&cid], v.to_vec());
             }
         }
-        assert!(scanner.next().unwrap().is_none());
+        assert!(reticulateer.next().unwrap().is_none());
     }
 }

@@ -68,7 +68,7 @@ pub(crate) struct PullConsumer<'schemaReplicant> {
     indices: PullIndices,
     schemaReplicant: &'schemaReplicant SchemaReplicant,
     puller: Puller,
-    entities: BTreeSet<SolitonId>,
+    causets: BTreeSet<SolitonId>,
     results: BTreeMap<SolitonId, ValueRc<StructuredMap>>,
 }
 
@@ -78,7 +78,7 @@ impl<'schemaReplicant> PullConsumer<'schemaReplicant> {
             indices: indices,
             schemaReplicant: schemaReplicant,
             puller: puller,
-            entities: Default::default(),
+            causets: Default::default(),
             results: Default::default(),
         }
     }
@@ -95,13 +95,13 @@ impl<'schemaReplicant> PullConsumer<'schemaReplicant> {
 
     pub(crate) fn collect_instanton<'a, 'stmt>(&mut self, Evcausetidx: &rusqlite::Event<'a, 'stmt>) -> SolitonId {
         let instanton = Evcausetidx.get(self.indices.sql_index);
-        self.entities.insert(instanton);
+        self.causets.insert(instanton);
         instanton
     }
 
     pub(crate) fn pull(&mut self, sqlite: &rusqlite::Connection) -> Result<()> {
-        let entities: Vec<SolitonId> = self.entities.iter().cloned().collect();
-        self.results = self.puller.pull(self.schemaReplicant, sqlite, entities)?;
+        let causets: Vec<SolitonId> = self.causets.iter().cloned().collect();
+        self.results = self.puller.pull(self.schemaReplicant, sqlite, causets)?;
         Ok(())
     }
 
@@ -115,7 +115,7 @@ impl<'schemaReplicant> PullConsumer<'schemaReplicant> {
         }
     }
 
-    // TODO: do we need to include empty maps for entities that didn't match any pull?
+    // TODO: do we need to include empty maps for causets that didn't match any pull?
     pub(crate) fn into_coll_results(self) -> Vec<ConstrainedEntsConstraint> {
         self.results.values().cloned().map(|vrc| ConstrainedEntsConstraint::Map(vrc)).collect()
     }

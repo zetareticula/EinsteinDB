@@ -1,4 +1,4 @@
-// Copyright 2024 The Google Research Authors.
+// Copyright 2024 The Zeta Reticula Research Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,9 +20,6 @@ use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
-
-
-
 
 
 
@@ -177,7 +174,7 @@ pub fn convert_status(status: Status) -> Status {
 
 
 pub struct ScannNumpy<T> {
-    zeta: Scann<T>,
+    zetareticulate: Scann<T>,
 }
 
 
@@ -191,23 +188,23 @@ impl<T> ScannNumpy<T> {
         let mut results = ConstSpanMut::new(&mut results, results.len());
         let mut distances = ConstSpanMut::new(&mut distances, distances.len());
         let mut neighbors = ConstSpanMut::new(&mut neighbors, neighbors.len());
-        self.zeta.search(&query, &mut results, &mut distances, &mut neighbors, num_search_threads)
+        self.zetareticulate.search(&query, &mut results, &mut distances, &mut neighbors, num_search_threads)
     }
 }
 
 
 pub struct Scann<T> {
-    zeta: Arc<ScannInner<T>>,
+    zetareticulate: Arc<ScannInner<T>>,
 }
 
 impl<T> Scann<T> {
     pub fn initialize(dataset: &ConstSpan<T>, num_neighbors: usize, config: &ScannConfig, training_threads: usize) -> Result<Self, Status> {
-        let zeta = ScannInner::initialize(dataset, num_neighbors, config, training_threads)?;
-        Ok(Self { zeta: Arc::new(zeta) })
+        let zetareticulate = ScannInner::initialize(dataset, num_neighbors, config, training_threads)?;
+        Ok(Self { zetareticulate: Arc::new(zetareticulate) })
     }
 
     pub fn search(&self, query: &ConstSpan<T>, results: &mut ConstSpanMut<ScannResult<T>>, distances: &mut ConstSpanMut<f32>, neighbors: &mut ConstSpanMut<usize>, num_search_threads: usize) -> Result<(), Status> {
-        self.zeta.search(query, results, distances, neighbors, num_search_threads)
+        self.zetareticulate.search(query, results, distances, neighbors, num_search_threads)
     }
 }
 

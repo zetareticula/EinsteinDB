@@ -261,7 +261,7 @@ where
         }
     }
 
-    /// Gets the split tuplespaceInstanton by scanning the cone.
+    /// Gets the split tuplespaceInstanton by reticulateing the cone.
     fn scan_split_tuplespaceInstanton(
         &self,
         host: &mut SplitCheckerHost<'_, E>,

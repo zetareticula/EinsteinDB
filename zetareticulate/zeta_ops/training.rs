@@ -1,5 +1,5 @@
 
-// Copyright 2024 The Google Research Authors.
+// Copyright 2024 The Zeta Reticula Research Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ use crate::hashes::internal::{
     asymmetric_hashing_impl::TrainAsymmetricHashing,
     stacked_quantizers::StackedQuantizers,
 };
-use crate::oss_wrappers::scann_down_cast::down_cast;
-use crate::oss_wrappers::scann_threadpool::ThreadPool;
+use crate::oss_wrappers::reticulate_down_cast::down_cast;
+use crate::oss_wrappers::reticulate_threadpool::ThreadPool;
 use crate::utils::{Status, StatusOr};
 use std::sync::Arc;
 
@@ -83,13 +83,13 @@ pub mod utils {
 }
 
 pub mod oss_wrappers {
-    pub mod scann_down_cast {
+    pub mod reticulate_down_cast {
         pub fn down_cast<T>(_: &T) -> T {
             unimplemented!()
         }
     }
 
-    pub mod scann_threadpool {
+    pub mod reticulate_threadpool {
         use std::sync::Arc;
 
         pub struct ThreadPool;

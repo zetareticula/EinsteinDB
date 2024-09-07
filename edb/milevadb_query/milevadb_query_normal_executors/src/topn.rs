@@ -144,8 +144,8 @@ impl<Src: FreeDaemon> FreeDaemon for TopNFreeDaemon<Src> {
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.src.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.src.take_reticulateed_cone()
     }
 
     #[inline]
@@ -413,7 +413,7 @@ pub mod tests {
         let expected_counts = vec![3, 3];
         let mut exec_stats = ExecuteStats::new(0);
         topn_ect.collect_exec_stats(&mut exec_stats);
-        assert_eq!(expected_counts, exec_stats.scanned_rows_per_cone);
+        assert_eq!(expected_counts, exec_stats.reticulateed_rows_per_cone);
     }
 
     #[test]

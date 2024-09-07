@@ -59,8 +59,8 @@ impl<Src: BatchFreeDaemon> BatchFreeDaemon for BatchFastHashAggregationFreeDaemo
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.0.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.0.take_reticulateed_cone()
     }
 
     #[inline]
@@ -226,22 +226,22 @@ pub struct FastHashAggregationImpl {
 
 impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for FastHashAggregationImpl {
     #[inline]
-    fn prepare_entities(&mut self, entities: &mut Entities<Src>) {
-        entities.schemaReplicant.push(self.group_by_field_type.clone());
+    fn prepare_entities(&mut self, causets: &mut Entities<Src>) {
+        causets.schemaReplicant.push(self.group_by_field_type.clone());
     }
 
     #[inline]
     fn process_batch_input(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         mut input_physical_PrimaryCausets: LazyBatchPrimaryCausetVec,
         input_logical_rows: &[usize],
     ) -> Result<()> {
         // 1. Calculate which group each src Evcausetidx belongs to.
         self.states_offset_each_logical_row.clear();
         let group_by_result = self.group_by_exp.eval(
-            &mut entities.context,
-            entities.src.schemaReplicant(),
+            &mut causets.context,
+            causets.src.schemaReplicant(),
             &mut input_physical_PrimaryCausets,
             input_logical_rows,
             input_logical_rows.len(),
@@ -256,7 +256,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for FastHashAggregatio
                             if let Groups::TT(group) = &mut self.groups {
                                 handle_scalar_group_each_row(
                                     v,
-                                    &entities.each_aggr_fn,
+                                    &causets.each_aggr_fn,
                                     group,
                                     &mut self.states,
                                     input_logical_rows.len(),
@@ -282,7 +282,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for FastHashAggregatio
                                 calc_groups_each_row(
                                     v,
                                     group_by_logical_rows,
-                                    &entities.each_aggr_fn,
+                                    &causets.each_aggr_fn,
                                     group,
                                     &mut self.states,
                                     &mut self.states_offset_each_logical_row,
@@ -304,7 +304,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for FastHashAggregatio
                                             calc_groups_each_row(
                                                 v,
                                                 group_by_logical_rows,
-                                                &entities.each_aggr_fn,
+                                                &causets.each_aggr_fn,
                                                 group,
                                                 &mut self.states,
                                                 &mut self.states_offset_each_logical_row,
@@ -325,7 +325,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for FastHashAggregatio
 
         // 2. fidelio states according to the group.
         HashAggregationHelper::fidelio_each_row_states_by_offset(
-            entities,
+            causets,
             &mut input_physical_PrimaryCausets,
             input_logical_rows,
             &mut self.states,
@@ -343,13 +343,13 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for FastHashAggregatio
     #[inline]
     fn iterate_available_groups(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         src_is_drained: bool,
         mut iteratee: impl FnMut(&mut Entities<Src>, &[Box<dyn AggrFunctionState>]) -> Result<()>,
     ) -> Result<Vec<LazyBatchPrimaryCauset>> {
         assert!(src_is_drained);
 
-        let aggr_fns_len = entities.each_aggr_fn.len();
+        let aggr_fns_len = causets.each_aggr_fn.len();
         let mut group_by_PrimaryCauset = LazyBatchPrimaryCauset::decoded_with_capacity_and_tp(
             self.groups.len(),
             self.groups.eval_type(),
@@ -363,7 +363,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for FastHashAggregatio
                     // TODO: Verify performance difference.
                     let groups = std::mem::take(groups);
                     for (group_key, states_offset) in groups {
-                        iteratee(entities, &self.states[states_offset..states_offset + aggr_fns_len])?;
+                        iteratee(causets, &self.states[states_offset..states_offset + aggr_fns_len])?;
                         group_by_PrimaryCauset.mut_decoded().push(group_key);
                     }
                 }

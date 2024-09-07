@@ -1,4 +1,4 @@
-//Copyright (c) 2022 Karl Whitford and Josh Leder. All rights reserved.
+//Copyright (c) 2024 Karl Whitford and Josh Leder. All rights reserved.
 // Copyright (c) 2020 The EinsteinDB Authors
 // Distributed under the MIT software license, see the accompanying
 // file LICENSE or https://www.opensource.org/licenses/mit-license.php.

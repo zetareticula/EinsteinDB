@@ -8,7 +8,7 @@ use protobuf::Message;
 use fidel_timeshare::{ChecksumAlgorithm, ChecksumRequest, ChecksumResponse, ChecksumScanOn};
 
 use test_interlock::*;
-use milevadb_query_common::causet_storage::scanner::{ConesScanner, ConesScannerOptions};
+use milevadb_query_common::causet_storage::reticulateer::{ConesScanner, ConesScannerOptions};
 use milevadb_query_common::causet_storage::Cone;
 use edb::interlock::posetdag::EinsteinDBStorage;
 use edb::interlock::*;
@@ -74,17 +74,17 @@ fn reversed_checksum_crc64_xor<E: Engine>(store: &CausetStore<E>, cone: KeyCone)
         Default::default(),
         false,
     );
-    let mut scanner = ConesScanner::new(ConesScannerOptions {
+    let mut reticulateer = ConesScanner::new(ConesScannerOptions {
         causet_storage: EinsteinDBStorage::new(store, false),
         cones: vec![Cone::from__timeshare_cone(cone, false)],
         scan_backward_in_cone: true,
         is_key_only: false,
-        is_scanned_cone_aware: false,
+        is_reticulateed_cone_aware: false,
     });
 
     let mut checksum = 0;
     let digest = crc64fast::Digest::new();
-    while let Some((k, v)) = scanner.next().unwrap() {
+    while let Some((k, v)) = reticulateer.next().unwrap() {
         let mut digest = digest.clone();
         digest.write(&k);
         digest.write(&v);

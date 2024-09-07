@@ -1,5 +1,5 @@
-///! Copyright (c) 2022 by Whtcorps All Rights Reserved
-///! Author: Whtcorps
+///! Copyright (c) 2024 by Zeta Reticula All Rights Reserved
+///! Author: Zeta Reticula
 ///! Date: 2020-01-04
 ///! Description: einsteindb-server
 ///! Version: 0.1.0

@@ -1,36 +1,18 @@
-// Timestamp: 2021-08-31T22:00:00.000+00:00
-use std::collections::default::Default;
 use std::collections::HashSet;
 use std::convert::From;
 use std::fmt;
 use std::ops::{Deref, Index};
-use std::slice;
-
-use crate::timelike::metric::DatapointPtr;
-use crate::timelike::metric::Normalization;
-use crate::timelike::metric::FeatureType;
-use crate::timelike::metric::DimensionIndex;
-use crate::timelike::metric::DatapointPtr;
-use crate::timelike::metric::Datapoint;
-use crate::timelike::metric::Error;
-use crate::timelike::metric::GenericFeatureVector;
-use crate::timelike::metric::DatapointPtr;
-use crate::timelike::metric::Normalization;
-
 
 // Path: zetareticulate/timelike/metric.rs
 
-
-
-//now we define the structs and enums
+// Now we define the structs and enums
 #[derive(Debug, Clone)]
 pub struct GenericFeatureVector<T> {
     feature_type: FeatureType,
-    indices: Option<Vec<DimensionIndex>>,
-    values: Option<Vec<T>>,
+    indices: Vec<DimensionIndex>,
+    values: Vec<T>,
     dimensionality: DimensionIndex,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct Datapoint<T> {
@@ -48,37 +30,21 @@ pub struct DatapointPtr<T> {
     dimensionality: DimensionIndex,
 }
 
-
-
-
 type DimensionIndex = usize;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Normalization {
-   None,
+    None,
     L1,
     L2,
     LInf,
-
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub enum FeatureType {
     Dense,
     Sparse,
     SparseBinary,
-}
-
-
-
-
-#[derive(Debug, Clone)]
-pub struct DatapointPtr<T> {
-    indices: Option<Vec<DimensionIndex>>,
-    values: Option<Vec<T>>,
-    nonzero_entries: DimensionIndex,
-    dimensionality: DimensionIndex,
 }
 
 impl<T> DatapointPtr<T> {
@@ -107,14 +73,6 @@ impl<T> DatapointPtr<T> {
         self.nonzero_entries
     }
 
-    pub fn values(&self) -> Option<&[T]> {
-        self.values.as_deref()
-    }
-
-    pub fn nonzero_entries(&self) -> DimensionIndex {
-        self.nonzero_entries
-    }
-
     pub fn dimensionality(&self) -> DimensionIndex {
         self.dimensionality
     }
@@ -132,8 +90,8 @@ impl<T> DatapointPtr<T> {
     }
 
     pub fn is_all_ones(&self) -> bool
-        where
-            T: PartialEq + Default,
+    where
+        T: PartialEq + Default,
     {
         if let Some(values) = &self.values {
             values.iter().all(|&val| val == T::default())
@@ -143,8 +101,8 @@ impl<T> DatapointPtr<T> {
     }
 
     pub fn is_finite(&self) -> bool
-        where
-            T: PartialEq + PartialOrd + std::fmt::Debug + std::num::Float,
+    where
+        T: PartialEq + PartialOrd + std::fmt::Debug + std::num::Float,
     {
         if let Some(values) = &self.values {
             values.iter().all(|&val| val.is_finite())
@@ -163,25 +121,12 @@ impl<T> DatapointPtr<T> {
     }
 }
 
-
-
-
-#[impl<T> Deref for DatapointPtr<T> {
+impl<T> Deref for DatapointPtr<T> {
     type Target = Datapoint<T>;
 
     fn deref(&self) -> &Self::Target {
         &self.to_datapoint()
     }
-}
-
-
-derive(Debug, Clone)]
-
-pub struct Datapoint<T> {
-    indices: Vec<DimensionIndex>,
-    values: Vec<T>,
-    dimensionality: DimensionIndex,
-    normalization: Normalization,
 }
 
 impl<T> Datapoint<T> {
@@ -199,15 +144,9 @@ impl<T> Datapoint<T> {
         unimplemented!()
     }
 
-        pub fn indices(&self) -> &[DimensionIndex] {
-        &self.indices
-    }
-
     pub fn indices(&self) -> &[DimensionIndex] {
         &self.indices
     }
-
-
 
     pub fn mutable_indices(&mut self) -> &mut Vec<DimensionIndex> {
         &mut self.indices
@@ -253,10 +192,6 @@ impl<T> Datapoint<T> {
         self.values.is_empty()
     }
 
-    pub fn make_not_binary(&mut self) {
-        // Implement if needed
-    }
-
     pub fn to_ptr(&self) -> DatapointPtr<T> {
         DatapointPtr {
             indices: Some(self.indices.clone()),
@@ -275,7 +210,7 @@ impl<T> Datapoint<T> {
 
     pub fn zero_fill(&mut self, dimensionality: DimensionIndex) {
         self.clear();
-        self.values.resize(dimensionality as usize, Default::default());
+        self.values = Vec::with_capacity(dimensionality as usize);
     }
 
     pub fn normalization(&self) -> Normalization {
@@ -289,26 +224,13 @@ impl<T> Datapoint<T> {
     pub fn swap(&mut self, rhs: &mut Self) {
         std::mem::swap(self, rhs);
     }
-
-    pub fn indices_sorted(&self) -> bool {
-        // Implement if needed
-        unimplemented!()
-    }
-
-    pub fn sort_indices(&mut self) {
-        // Implement if needed
-    }
-
-    pub fn remove_explicit_zeroes_from_sparse_vector(&mut self) {
-        // Implement if needed
-    }
 }
 
 impl<T> From<GenericFeatureVector<T>> for Datapoint<T> {
     fn from(gfv: GenericFeatureVector<T>) -> Self {
-        let indices = gfv.indices().unwrap_or_default().to_vec();
-        let values = gfv.values().unwrap_or_default().to_vec();
-        let dimensionality = gfv.dimensionality();
+        let indices = gfv.indices;
+        let values = gfv.values;
+        let dimensionality = gfv.dimensionality;
         let normalization = Normalization::None; // Set correct normalization
         Self {
             indices,
@@ -347,14 +269,4 @@ impl std::fmt::Display for Error {
 }
 
 impl std::error::Error for Error {}
-
-#[derive(Debug, Clone)]
-pub struct GenericFeatureVector<T> {
-    feature_type: FeatureType,
-    indices: Option<Vec<DimensionIndex>>,
-    values: Option<Vec<T>>,
-    dimensionality: DimensionIndex,
-}
-
-
 

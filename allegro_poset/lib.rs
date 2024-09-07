@@ -1,4 +1,4 @@
-///Copyright (c) 2022 EinsteinDB contributors
+///Copyright (c) 2024 EinsteinDB contributors
 ///
 /// Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 /// and associated documentation files (the "Software"), to deal in the Software without restriction,

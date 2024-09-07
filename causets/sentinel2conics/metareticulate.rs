@@ -139,7 +139,7 @@ use std; // To refer to std::result::Result.
 // };
 //
 // use core_traits::{
-//     Entid,
+//     Causetid,
 // };
 
 use crate::errors::{
@@ -147,7 +147,7 @@ use crate::errors::{
 };
 
 use crate::types::{
-    Entid,
+    Causetid,
 };
 
 
@@ -161,12 +161,12 @@ pub struct PullDuration(pub Duration);
 pub struct PullInstant(pub Instant);
 
 
-#[Arc<Mutex<HashMap<Entid, String>>> = "A map from attribute entid to attribute name."]
-pub struct AttributeCache(pub Arc<Mutex<HashMap<Entid, String>>);
+#[Arc<Mutex<HashMap<Causetid, String>>> = "A map from attribute entid to attribute name."]
+pub struct AttributeCache(pub Arc<Mutex<HashMap<Causetid, String>>);
 
 
 
-#[Vec<Entid> = "A vector of attribute entids."]
+#[Vec<Causetid> = "A vector of attribute entids."]
 pub type Result<T> = std::result::Result<T, PullError>;
 
 /// Errors that can occur when pulling an entity from the database.
@@ -175,7 +175,7 @@ pub type Result<T> = std::result::Result<T, PullError>;
 #[derive(Debug, Fail)]
 pub enum PullError {
     #[fail(display = "attribute {:?} has no name", _0)]
-    UnnamedAttribute(Entid),
+    UnnamedAttribute(Causetid),
 
     #[fail(display = ":db/id repeated")]
     RepeatedDbId,

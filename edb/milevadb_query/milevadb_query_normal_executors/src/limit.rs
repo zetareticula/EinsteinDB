@@ -61,8 +61,8 @@ impl<Src: FreeDaemon> FreeDaemon for LimitFreeDaemon<Src> {
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.src.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.src.take_reticulateed_cone()
     }
 
     #[inline]

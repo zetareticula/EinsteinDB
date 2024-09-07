@@ -1,4 +1,4 @@
-//Copyright (c) 2022-Present, Whtcorps Inc and EinstAI Team
+//Copyright (c) 2024-Present, Zeta Reticula Inc and EinstAI Team
 //All rights reserved.
 //
 //Redistribution and use in source and binary forms, with or without

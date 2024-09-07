@@ -66,7 +66,7 @@ use edbn::{
     FromRc,
 };
 
-use edbn::entities::{
+use edbn::causets::{
     AttributePlace,
     InstantonPlace,
     SolitonIdOrCausetId,
@@ -200,7 +200,7 @@ pub struct Attribute {
     ///
     /// Component attributes always have value type `Ref`.
     ///
-    /// They are used to compose entities from component sub-entities: they are fetched recursively
+    /// They are used to compose causets from component sub-causets: they are fetched recursively
     /// by pull expressions, and they are automatically recursively deleted where appropriate.
     pub component: bool,
 

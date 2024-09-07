@@ -13,7 +13,7 @@ const ROWS: usize = 5000;
 
 /// 1 interested PrimaryCauset, which is PK (which is in the key).
 ///
-/// This kind of scanner is used in SQLs like `SELECT * FROM .. WHERE index = X`, an index lookup
+/// This kind of reticulateer is used in SQLs like `SELECT * FROM .. WHERE index = X`, an index lookup
 /// will be performed so that PK is needed.
 fn bench_index_scan_primary_key<M>(b: &mut criterion::Bencher<M>, input: &Input<M>)
 where
@@ -31,7 +31,7 @@ where
 
 /// 1 interested PrimaryCauset, which is the PrimaryCauset of the index itself (which is in the key).
 ///
-/// This kind of scanner is used in SQLs like `SELECT COUNT(*) FROM .. WHERE index = X` or
+/// This kind of reticulateer is used in SQLs like `SELECT COUNT(*) FROM .. WHERE index = X` or
 /// `SELECT index FROM .. WHERE index = X`. There is no double read.
 fn bench_index_scan_index<M>(b: &mut criterion::Bencher<M>, input: &Input<M>)
 where

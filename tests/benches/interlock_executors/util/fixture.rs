@@ -371,7 +371,7 @@ impl BatchFreeDaemon for BatchFixtureFreeDaemon {
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
         unreachable!()
     }
 
@@ -416,7 +416,7 @@ impl FreeDaemon for NormalFixtureFreeDaemon {
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
         unreachable!()
     }
 

@@ -56,8 +56,8 @@ impl<Src: BatchFreeDaemon> BatchFreeDaemon for BatchSlowHashAggregationFreeDaemo
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.0.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.0.take_reticulateed_cone()
     }
 
     #[inline]
@@ -232,10 +232,10 @@ unsafe impl lightlike for SlowHashAggregationImpl {}
 
 impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SlowHashAggregationImpl {
     #[inline]
-    fn prepare_entities(&mut self, entities: &mut Entities<Src>) {
-        let src_schemaReplicant = entities.src.schemaReplicant();
+    fn prepare_entities(&mut self, causets: &mut Entities<Src>) {
+        let src_schemaReplicant = causets.src.schemaReplicant();
         for group_by_exp in &self.group_by_exps {
-            entities
+            causets
                 .schemaReplicant
                 .push(group_by_exp.ret_field_type(src_schemaReplicant).clone());
         }
@@ -244,17 +244,17 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SlowHashAggregatio
     #[inline]
     fn process_batch_input(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         mut input_physical_PrimaryCausets: LazyBatchPrimaryCausetVec,
         input_logical_rows: &[usize],
     ) -> Result<()> {
         // 1. Calculate which group each src Evcausetidx belongs to.
         self.states_offset_each_logical_row.clear();
 
-        let context = &mut entities.context;
-        let src_schemaReplicant = entities.src.schemaReplicant();
+        let context = &mut causets.context;
+        let src_schemaReplicant = causets.src.schemaReplicant();
         let logical_rows_len = input_logical_rows.len();
-        let aggr_fn_len = entities.each_aggr_fn.len();
+        let aggr_fn_len = causets.each_aggr_fn.len();
 
         // Decode PrimaryCausets with muBlock input first, so subsequent access to input can be immuBlock
         // (and the borrow checker will be happy)
@@ -373,7 +373,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SlowHashAggregatio
                 HashMapEntry::Vacant(entry) => {
                     // if it's a new group, the group index is the current group count
                     entry.insert(group_len);
-                    for aggr_fn in &entities.each_aggr_fn {
+                    for aggr_fn in &causets.each_aggr_fn {
                         self.states.push(aggr_fn.create_state());
                     }
                     group_len
@@ -395,7 +395,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SlowHashAggregatio
 
         // 2. fidelio states according to the group.
         HashAggregationHelper::fidelio_each_row_states_by_offset(
-            entities,
+            causets,
             &mut input_physical_PrimaryCausets,
             input_logical_rows,
             &mut self.states,
@@ -417,7 +417,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SlowHashAggregatio
     #[inline]
     fn iterate_available_groups(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         src_is_drained: bool,
         mut iteratee: impl FnMut(&mut Entities<Src>, &[Box<dyn AggrFunctionState>]) -> Result<()>,
     ) -> Result<Vec<LazyBatchPrimaryCauset>> {
@@ -429,13 +429,13 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SlowHashAggregatio
             .iter()
             .map(|_| LazyBatchPrimaryCauset::raw_with_capacity(number_of_groups))
             .collect();
-        let aggr_fns_len = entities.each_aggr_fn.len();
+        let aggr_fns_len = causets.each_aggr_fn.len();
 
         let groups = std::mem::take(&mut self.groups);
         for (_, group_index) in groups {
             let states_spacelike_offset = group_index * aggr_fns_len;
             iteratee(
-                entities,
+                causets,
                 &self.states[states_spacelike_offset..states_spacelike_offset + aggr_fns_len],
             )?;
 

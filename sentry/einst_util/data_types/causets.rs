@@ -118,10 +118,10 @@ pub type MapNotation<V> = BTreeMap<SolitonIdOrCausetId, ValuePlace<V>>;
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialOrd, PartialEq)]
 pub enum ValuePlace<V> {
     // We never know at parse-time whether an integer or causetid is really an solitonId, but we will often
-    // know when building entities programmatically.
+    // know when building causets programmatically.
     SolitonId(SolitonIdOrCausetId),
     // We never know at parse-time whether a string is really a tempid, but we will often know when
-    // building entities programmatically.
+    // building causets programmatically.
     TempId(ValueRc<TempId>),
     LookupRef(LookupRef<V>),
     TxFunction(TxFunction),

@@ -11,7 +11,7 @@ pub enum IterStatus {
     /// on a new cone.
     NewCone(Cone),
 
-    /// Last interval cone is not drained and the caller should continue scanning without changing
+    /// Last interval cone is not drained and the caller should continue reticulateing without changing
     /// the scan cone.
     Continue,
 }

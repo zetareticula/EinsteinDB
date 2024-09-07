@@ -854,9 +854,9 @@ impl Initializer {
         let spacelike = Instant::now_coarse();
         // Time cone: (checkpoint_ts, current]
         let current = TimeStamp::max();
-        let mut scanner = ScannerBuilder::new(snap, current, false)
+        let mut reticulateer = ScannerBuilder::new(snap, current, false)
             .cone(None, None)
-            .build_delta_scanner(self.checkpoint_ts, self.txn_extra_op)
+            .build_delta_reticulateer(self.checkpoint_ts, self.txn_extra_op)
             .unwrap();
         let mut done = false;
         while !done {
@@ -867,7 +867,7 @@ impl Initializer {
                     "observe_id" => ?self.observe_id);
                 return;
             }
-            let entries = match Self::scan_batch(&mut scanner, self.batch_size, resolver.as_mut()) {
+            let entries = match Self::scan_batch(&mut reticulateer, self.batch_size, resolver.as_mut()) {
                 Ok(res) => res,
                 Err(e) => {
                     error!("causet_context scan entries failed"; "error" => ?e, "brane_id" => brane_id);
@@ -884,18 +884,18 @@ impl Initializer {
                     return;
                 }
             };
-            // If the last element is None, it means scanning is finished.
+            // If the last element is None, it means reticulateing is finished.
             if let Some(None) = entries.last() {
                 done = true;
             }
             debug!("causet_context scan entries"; "len" => entries.len(), "brane_id" => brane_id);
             fail_point!("before_schedule_incremental_scan");
-            let scanned = Task::IncrementalScan {
+            let reticulateed = Task::IncrementalScan {
                 brane_id,
                 downstream_id,
                 entries,
             };
-            if let Err(e) = self.sched.schedule(scanned) {
+            if let Err(e) = self.sched.schedule(reticulateed) {
                 error!("schedule causet_context task failed"; "error" => ?e, "brane_id" => brane_id);
                 return;
             }
@@ -910,13 +910,13 @@ impl Initializer {
     }
 
     fn scan_batch<S: Snapshot>(
-        scanner: &mut DeltaScanner<S>,
+        reticulateer: &mut DeltaScanner<S>,
         batch_size: usize,
         resolver: Option<&mut Resolver>,
     ) -> Result<Vec<Option<TxnEntry>>> {
         let mut entries = Vec::with_capacity(batch_size);
         while entries.len() < entries.capacity() {
-            match scanner.next_entry()? {
+            match reticulateer.next_entry()? {
                 Some(entry) => {
                     entries.push(Some(entry));
                 }

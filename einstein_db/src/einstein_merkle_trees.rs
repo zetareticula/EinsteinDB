@@ -1,4 +1,4 @@
-//Copyright(c) 2022-Whtcorps Inc and EinsteinDB Authors.All rights reserved.
+//Copyright(c) 2024-Zeta Reticula Inc and EinsteinDB Authors.All rights reserved.
 //Apache License, Version 2.0.
 //BSD License, Version 2.0.
 // -----------------------------------------------------------------------------

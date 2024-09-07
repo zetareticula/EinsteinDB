@@ -1,4 +1,4 @@
-// Copyright 2022 EinsteinDB Project Authors. Licensed under Apache-2.0.
+// Copyright 2024 EinsteinDB Project Authors. Licensed under Apache-2.0.
 // -----------------------------------------------------------------------------
 //! # EinsteinDB
 //! # Copyright (C) 2020 EinsteinDB Project Authors. All rights reserved.

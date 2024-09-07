@@ -42,12 +42,12 @@ use milevadb_query_vec_aggr::*;
 use milevadb_query_vec_expr::RpnExpression;
 
 pub trait AggregationFreeDaemonImpl<Src: BatchFreeDaemon>: lightlike {
-    /// Accepts entities without any group by PrimaryCausets and modifies them optionally.
+    /// Accepts causets without any group by PrimaryCausets and modifies them optionally.
     ///
     /// Implementors should modify the `schemaReplicant` entity when there are group by PrimaryCausets.
     ///
     /// This function will be called only once.
-    fn prepare_entities(&mut self, entities: &mut Entities<Src>);
+    fn prepare_entities(&mut self, causets: &mut Entities<Src>);
 
     /// Processes a set of PrimaryCausets which are emitted from the underlying executor.
     ///
@@ -55,7 +55,7 @@ pub trait AggregationFreeDaemonImpl<Src: BatchFreeDaemon>: lightlike {
     /// these PrimaryCausets.
     fn process_batch_input(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         input_physical_PrimaryCausets: LazyBatchPrimaryCausetVec,
         input_logical_rows: &[usize],
     ) -> Result<()>;
@@ -77,7 +77,7 @@ pub trait AggregationFreeDaemonImpl<Src: BatchFreeDaemon>: lightlike {
     /// input data.
     fn iterate_available_groups(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         src_is_drained: bool,
         iteratee: impl FnMut(&mut Entities<Src>, &[Box<dyn AggrFunctionState>]) -> Result<()>,
     ) -> Result<Vec<LazyBatchPrimaryCauset>>;
@@ -118,7 +118,7 @@ pub struct Entities<Src: BatchFreeDaemon> {
 pub struct AggregationFreeDaemon<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> {
     imp: I,
     is_lightlikeed: bool,
-    entities: Entities<Src>,
+    causets: Entities<Src>,
 }
 
 impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> AggregationFreeDaemon<Src, I> {
@@ -168,7 +168,7 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> AggregationFreeDae
             })
             .collect();
 
-        let mut entities = Entities {
+        let mut causets = Entities {
             src,
             context: EvalContext::new(config),
             schemaReplicant,
@@ -177,12 +177,12 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> AggregationFreeDae
             each_aggr_exprs,
             all_result_PrimaryCauset_types,
         };
-        imp.prepare_entities(&mut entities);
+        imp.prepare_entities(&mut causets);
 
         Ok(Self {
             imp,
             is_lightlikeed: false,
-            entities,
+            causets,
         })
     }
 
@@ -191,9 +191,9 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> AggregationFreeDae
     fn handle_next_batch(&mut self) -> Result<(Option<LazyBatchPrimaryCausetVec>, bool)> {
         // Use max batch size from the beginning because aggregation
         // always needs to calculate over all data.
-        let src_result = self.entities.src.next_batch(crate::runner::BATCH_MAX_SIZE);
+        let src_result = self.causets.src.next_batch(crate::runner::BATCH_MAX_SIZE);
 
-        self.entities.context.warnings = src_result.warnings;
+        self.causets.context.warnings = src_result.warnings;
 
         // When there are errors in the underlying executor, there must be no aggregate output.
         // Thus we even don't need to fidelio the aggregate function state and can return directly.
@@ -203,7 +203,7 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> AggregationFreeDae
         // for the same reason as above.
         if !src_result.logical_rows.is_empty() {
             self.imp.process_batch_input(
-                &mut self.entities,
+                &mut self.causets,
                 src_result.physical_PrimaryCausets,
                 &src_result.logical_rows,
             )?;
@@ -222,7 +222,7 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> AggregationFreeDae
     fn aggregate_partial_results(&mut self, src_is_drained: bool) -> Result<LazyBatchPrimaryCausetVec> {
         let groups_len = self.imp.groups_len();
         let mut all_result_PrimaryCausets: Vec<_> = self
-            .entities
+            .causets
             .all_result_PrimaryCauset_types
             .iter()
             .map(|eval_type| VectorValue::with_capacity(groups_len, *eval_type))
@@ -230,19 +230,19 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> AggregationFreeDae
 
         // Pull aggregate results of each available group
         let group_by_PrimaryCausets = self.imp.iterate_available_groups(
-            &mut self.entities,
+            &mut self.causets,
             src_is_drained,
-            |entities, states| {
-                assert_eq!(states.len(), entities.each_aggr_cardinality.len());
+            |causets, states| {
+                assert_eq!(states.len(), causets.each_aggr_cardinality.len());
 
                 let mut offset = 0;
                 for (state, result_cardinality) in
-                    states.iter().zip(&entities.each_aggr_cardinality)
+                    states.iter().zip(&causets.each_aggr_cardinality)
                 {
                     assert!(*result_cardinality > 0);
 
                     state.push_result(
-                        &mut entities.context,
+                        &mut causets.context,
                         &mut all_result_PrimaryCausets[offset..offset + *result_cardinality],
                     )?;
 
@@ -272,7 +272,7 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> BatchFreeDaemon
 
     #[inline]
     fn schemaReplicant(&self) -> &[FieldType] {
-        self.entities.schemaReplicant.as_slice()
+        self.causets.schemaReplicant.as_slice()
     }
 
     #[inline]
@@ -288,7 +288,7 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> BatchFreeDaemon
                 BatchExecuteResult {
                     physical_PrimaryCausets: LazyBatchPrimaryCausetVec::empty(),
                     logical_rows: Vec::new(),
-                    warnings: self.entities.context.take_warnings(),
+                    warnings: self.causets.context.take_warnings(),
                     is_drained: Err(e),
                 }
             }
@@ -299,7 +299,7 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> BatchFreeDaemon
                 BatchExecuteResult {
                     physical_PrimaryCausets: logical_PrimaryCausets,
                     logical_rows,
-                    warnings: self.entities.context.take_warnings(),
+                    warnings: self.causets.context.take_warnings(),
                     is_drained: Ok(src_is_drained),
                 }
             }
@@ -308,22 +308,22 @@ impl<Src: BatchFreeDaemon, I: AggregationFreeDaemonImpl<Src>> BatchFreeDaemon
 
     #[inline]
     fn collect_exec_stats(&mut self, dest: &mut ExecuteStats) {
-        self.entities.src.collect_exec_stats(dest);
+        self.causets.src.collect_exec_stats(dest);
     }
 
     #[inline]
     fn collect_causet_storage_stats(&mut self, dest: &mut Self::StorageStats) {
-        self.entities.src.collect_causet_storage_stats(dest);
+        self.causets.src.collect_causet_storage_stats(dest);
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.entities.src.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.causets.src.take_reticulateed_cone()
     }
 
     #[inline]
     fn can_be_cached(&self) -> bool {
-        self.entities.src.can_be_cached()
+        self.causets.src.can_be_cached()
     }
 }
 

@@ -43,7 +43,7 @@ impl BatchFreeDaemon for MockFreeDaemon {
         // Do nothing
     }
 
-    fn take_scanned_cone(&mut self) -> IntervalCone {
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
         // Do nothing
         unreachable!()
     }

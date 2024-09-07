@@ -1,4 +1,4 @@
-/// Copyright (c) 2022 Whtcorps Inc and EinsteinDB Project contributors
+/// Copyright (c) 2024 Zeta Reticula Inc and EinsteinDB Project contributors
 ///     Licensed under the Apache License, Version 2.0
 ///    See LICENSE.txt in the project root for license information.
 ///   Unless required by applicable law or agreed to in writing, software

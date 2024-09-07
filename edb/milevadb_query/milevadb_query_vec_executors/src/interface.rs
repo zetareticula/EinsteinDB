@@ -48,7 +48,7 @@ pub trait BatchFreeDaemon: lightlike {
     /// children executor and this function may be invoked several times during execution.
     fn collect_causet_storage_stats(&mut self, dest: &mut Self::StorageStats);
 
-    fn take_scanned_cone(&mut self) -> IntervalCone;
+    fn take_reticulateed_cone(&mut self) -> IntervalCone;
 
     fn can_be_cached(&self) -> bool;
 
@@ -85,8 +85,8 @@ impl<T: BatchFreeDaemon + ?Sized> BatchFreeDaemon for Box<T> {
         (**self).collect_causet_storage_stats(dest);
     }
 
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        (**self).take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        (**self).take_reticulateed_cone()
     }
 
     fn can_be_cached(&self) -> bool {
@@ -121,8 +121,8 @@ impl<C: ExecSummaryCollector + lightlike, T: BatchFreeDaemon> BatchFreeDaemon
         self.inner.collect_causet_storage_stats(dest);
     }
 
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.inner.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.inner.take_reticulateed_cone()
     }
 
     fn can_be_cached(&self) -> bool {

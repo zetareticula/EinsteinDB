@@ -46,8 +46,8 @@ impl<Src: BatchFreeDaemon> BatchFreeDaemon for BatchSimpleAggregationFreeDaemon<
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.0.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.0.take_reticulateed_cone()
     }
 
     #[inline]
@@ -103,7 +103,7 @@ impl<Src: BatchFreeDaemon> BatchSimpleAggregationFreeDaemon<Src> {
         aggr_def_parser: impl AggrDefinitionParser,
     ) -> Result<Self> {
         // Empty states is fine because it will be re-initialized later according to the content
-        // in entities.
+        // in causets.
         let aggr_impl = SimpleAggregationImpl { states: Vec::new() };
 
         Ok(Self(AggregationFreeDaemon::new(
@@ -121,8 +121,8 @@ pub struct SimpleAggregationImpl {
 }
 
 impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SimpleAggregationImpl {
-    fn prepare_entities(&mut self, entities: &mut Entities<Src>) {
-        let states = entities
+    fn prepare_entities(&mut self, causets: &mut Entities<Src>) {
+        let states = causets
             .each_aggr_fn
             .iter()
             .map(|f| f.create_state())
@@ -133,20 +133,20 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SimpleAggregationI
     #[inline]
     fn process_batch_input(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         mut input_physical_PrimaryCausets: LazyBatchPrimaryCausetVec,
         input_logical_rows: &[usize],
     ) -> Result<()> {
         let rows_len = input_logical_rows.len();
 
-        assert_eq!(self.states.len(), entities.each_aggr_exprs.len());
+        assert_eq!(self.states.len(), causets.each_aggr_exprs.len());
 
         for idx in 0..self.states.len() {
             let aggr_state = &mut self.states[idx];
-            let aggr_expr = &entities.each_aggr_exprs[idx];
+            let aggr_expr = &causets.each_aggr_exprs[idx];
             let aggr_fn_input = aggr_expr.eval(
-                &mut entities.context,
-                entities.src.schemaReplicant(),
+                &mut causets.context,
+                causets.src.schemaReplicant(),
                 &mut input_physical_PrimaryCausets,
                 input_logical_rows,
                 rows_len,
@@ -159,7 +159,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SimpleAggregationI
                             ScalarValueRef::TT(scalar_value) => {
                                 fidelio_repeat!(
                                     aggr_state,
-                                    &mut entities.context,
+                                    &mut causets.context,
                                     scalar_value,
                                     rows_len
                                 )?;
@@ -175,7 +175,7 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SimpleAggregationI
                             VectorValue::TT(vec) => {
                                 fidelio_vector!(
                                     aggr_state,
-                                    &mut entities.context,
+                                    &mut causets.context,
                                     vec,
                                     logical_rows
                                 )?;
@@ -197,12 +197,12 @@ impl<Src: BatchFreeDaemon> AggregationFreeDaemonImpl<Src> for SimpleAggregationI
     #[inline]
     fn iterate_available_groups(
         &mut self,
-        entities: &mut Entities<Src>,
+        causets: &mut Entities<Src>,
         src_is_drained: bool,
         mut iteratee: impl FnMut(&mut Entities<Src>, &[Box<dyn AggrFunctionState>]) -> Result<()>,
     ) -> Result<Vec<LazyBatchPrimaryCauset>> {
         assert!(src_is_drained);
-        iteratee(entities, &self.states)?;
+        iteratee(causets, &self.states)?;
         Ok(Vec::new())
     }
 

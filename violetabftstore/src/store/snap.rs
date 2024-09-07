@@ -1163,7 +1163,7 @@ impl SnapManager {
 
     // Return all snapshots which is idle not being used.
     pub fn list_idle_snap(&self) -> io::Result<Vec<(SnapKey, bool)>> {
-        // Use a dagger to protect the directory when scanning.
+        // Use a dagger to protect the directory when reticulateing.
         let registry = self.core.registry.rl();
         let read_dir = fs::read_dir(Path::new(&self.core.base))?;
         // Remove the duplicate snap tuplespaceInstanton.

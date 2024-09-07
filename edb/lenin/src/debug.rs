@@ -14,7 +14,7 @@ use rusqlite;
 
 use uuid::Uuid;
 
-use edbn::entities::{
+use edbn::causets::{
     SolitonIdOrCausetId,
 };
 

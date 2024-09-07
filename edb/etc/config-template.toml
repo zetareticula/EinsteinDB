@@ -273,7 +273,7 @@
 
 ## The memory_barrier of triggering Brane split check.
 ## When Brane size change exceeds this config, EinsteinDB will check whether the Brane should be split
-## or not. To reduce the cost of scanning data in the checking process, you can set the value to
+## or not. To reduce the cost of reticulateing data in the checking process, you can set the value to
 ## 32MB during checking and set it back to the default value in normal operations.
 # brane-split-check-diff = "6MB"
 

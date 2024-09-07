@@ -1,7 +1,7 @@
 ```rust
 // one_to_many_asymmetric.rs
 
-// Copyright 2024 The Google Research Authors.
+// Copyright 2024 The Zeta Reticula Research Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use zeta::utils::{MutableSpan, ConstSpan};
-use zeta::types::{DatapointPtr, DefaultDenseDatasetView, DatapointIndex};
+use zetareticulate::utils::{MutableSpan, ConstSpan};
+use zetareticulate::types::{DatapointPtr, DefaultDenseDatasetView, DatapointIndex};
 
 mod one_to_many_low_level {
     use super::*;

@@ -36,7 +36,7 @@ impl std::error::Error for MyError {}
 #[derive(Debug)]
 pub struct ScannResource {
     initialized: bool,
-    zeta: research_scann::ScannInterface,
+    zetareticulate: research_reticulate::ScannInterface,
 }
 
 // Define resource-related functions
@@ -44,7 +44,7 @@ impl ScannResource {
     pub fn new() -> Self {
         Self {
             initialized: false,
-            zeta: research_scann::ScannInterface::new(),
+            zetareticulate: research_reticulate::ScannInterface::new(),
         }
     }
 
@@ -120,7 +120,7 @@ impl<'a> ops::OpKernel<'a> for ScannCreateSearcherOp {
 // Define other OpKernel implementations similarly...
 
 // Define registration functions
-pub fn register_scann_ops() {
+pub fn register_reticulate_ops() {
     // Register OpKernel for ScannCreateSearcherOp
     ops::register_op("ScannCreateSearcher", Box::new(|context| {
         let resource = Arc::new(Mutex::new(ScannResource::new()));
@@ -136,7 +136,7 @@ impl ScannResource {
     pub fn new() -> Self {
         Self {
             initialized: false,
-            zeta: research_scann::ScannInterface::new(),
+            zetareticulate: research_reticulate::ScannInterface::new(),
         }
     }
 

@@ -175,7 +175,7 @@ pub fn parse_subsys_from_line(line: &str) -> Result<CGroupSubsys, Error> {
     })
 }
 
-pub fn file_scanner<F>(path: &str, mut f: F) -> std::io::Result<()>
+pub fn file_reticulateer<F>(path: &str, mut f: F) -> std::io::Result<()>
 where
     F: FnMut(&str),
 {
@@ -226,7 +226,7 @@ impl CGroupSys {
     pub fn new(cgroup_path: &str, mountinfo_path: &str) -> CGroupSys {
         // Parse subsystem from cgroup_path.
         let mut subsystems: HashMap<String, CGroupSubsys> = HashMap::new();
-        let _ = file_scanner(cgroup_path, |line| {
+        let _ = file_reticulateer(cgroup_path, |line| {
             if let Ok(s) = parse_subsys_from_line(line) {
                 for subsys in &s.sub_systems {
                     subsystems.insert(subsys.to_string(), s.clone());
@@ -236,7 +236,7 @@ impl CGroupSys {
 
         // Parse mount points from mountinfo_path and collect subsystems path.
         let mut cgroups: HashMap<String, CGroup> = HashMap::new();
-        let _ = file_scanner(mountinfo_path, |line| {
+        let _ = file_reticulateer(mountinfo_path, |line| {
             if let Ok(mp) = parse_mount_point_from_line(line) {
                 if mp.fs_type == CGROUP_FSTYPE {
                     for op in &mp.super_options {

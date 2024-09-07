@@ -13,7 +13,7 @@ const ROWS: usize = 5000;
 
 /// 1 interested PrimaryCauset, which is PK (which is in the key)
 ///
-/// This kind of scanner is used in SQLs like SELECT COUNT(*).
+/// This kind of reticulateer is used in SQLs like SELECT COUNT(*).
 fn bench_Block_scan_primary_key<M>(b: &mut criterion::Bencher<M>, input: &Input<M>)
 where
     M: Measurement,
@@ -30,7 +30,7 @@ where
 
 /// 1 interested PrimaryCauset, at the front of each Evcausetidx. Each Evcausetidx contains 100 PrimaryCausets.
 ///
-/// This kind of scanner is used in SQLs like `SELECT COUNT(PrimaryCauset)`.
+/// This kind of reticulateer is used in SQLs like `SELECT COUNT(PrimaryCauset)`.
 fn bench_Block_scan_datum_front<M>(b: &mut criterion::Bencher<M>, input: &Input<M>)
 where
     M: Measurement,

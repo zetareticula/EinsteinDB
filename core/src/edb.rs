@@ -218,7 +218,7 @@ lazy_static! {
                FROM causets, fulltext_values
                WHERE causets.index_fulltext IS NOT 0 AND causets.v = fulltext_values.rowid"#,
 
-        // A view transparently interpolating all entities (fulltext and non-fulltext) into the Causet structure.
+        // A view transparently interpolating all causets (fulltext and non-fulltext) into the Causet structure.
         r#"CREATE VIEW all_Causets AS
              SELECT e, a, v, causetx, value_type_tag, index_avet, index_vaet, index_fulltext, unique_value
                FROM causets
@@ -560,8 +560,8 @@ pub trait EinsteinDBStoring {
     fn begin_causecausetx_application(&self) -> Result<()>;
 
     // TODO: this is not a reasonable abstraction, but I don't want to really consider non-SQL storage just yet.
-    fn insert_non_fts_searches<'a>(&self, entities: &'a [ReducedInstanton], search_type: SearchType) -> Result<()>;
-    fn insert_fts_searches<'a>(&self, entities: &'a [ReducedInstanton], search_type: SearchType) -> Result<()>;
+    fn insert_non_fts_searches<'a>(&self, causets: &'a [ReducedInstanton], search_type: SearchType) -> Result<()>;
+    fn insert_fts_searches<'a>(&self, causets: &'a [ReducedInstanton], search_type: SearchType) -> Result<()>;
 
     /// Prepare the underlying storage layer for finalization after a EinsteinDB transaction.
     ///
@@ -820,11 +820,11 @@ impl EinsteinDBStoring for rusqlite::Connection {
     ///
     /// Eventually, the details of this approach will be captured in
     /// https://github.com/whtcorpsinc/edb/wiki/Transacting:-instanton-to-SQL-translation.
-    fn insert_non_fts_searches<'a>(&self, entities: &'a [ReducedInstanton<'a>], search_type: SearchType) -> Result<()> {
+    fn insert_non_fts_searches<'a>(&self, causets: &'a [ReducedInstanton<'a>], search_type: SearchType) -> Result<()> {
         let ConstrainedEntss_per_statement = 6;
 
         let max_vars = self.limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER) as usize;
-        let chunks: itertools::IntoChunks<_> = entities.into_iter().chunks(max_vars / ConstrainedEntss_per_statement);
+        let chunks: itertools::IntoChunks<_> = causets.into_iter().chunks(max_vars / ConstrainedEntss_per_statement);
 
         // We'd like to flat_map here, but it's not obvious how to flat_map across Result.
         let results: Result<Vec<()>> = chunks.into_iter().map(|chunk| -> Result<()> {
@@ -885,16 +885,16 @@ impl EinsteinDBStoring for rusqlite::Connection {
     ///
     /// Eventually, the details of this approach will be captured in
     /// https://github.com/whtcorpsinc/edb/wiki/Transacting:-instanton-to-SQL-translation.
-    fn insert_fts_searches<'a>(&self, entities: &'a [ReducedInstanton<'a>], search_type: SearchType) -> Result<()> {
+    fn insert_fts_searches<'a>(&self, causets: &'a [ReducedInstanton<'a>], search_type: SearchType) -> Result<()> {
         let max_vars = self.limit(Limit::SQLITE_LIMIT_VARIABLE_NUMBER) as usize;
         let ConstrainedEntss_per_statement = 6;
 
         let mut outer_searchid = 2000;
 
-        let chunks: itertools::IntoChunks<_> = entities.into_iter().chunks(max_vars / ConstrainedEntss_per_statement);
+        let chunks: itertools::IntoChunks<_> = causets.into_iter().chunks(max_vars / ConstrainedEntss_per_statement);
 
         // From string to (searchid, value_type_tag).
-        let mut seen: HashMap<ValueRc<String>, (i64, i32)> = HashMap::with_capacity(entities.len());
+        let mut seen: HashMap<ValueRc<String>, (i64, i32)> = HashMap::with_capacity(causets.len());
 
         // We'd like to flat_map here, but it's not obvious how to flat_map across Result.
         let results: Result<Vec<()>> = chunks.into_iter().map(|chunk| -> Result<()> {
@@ -1208,7 +1208,7 @@ mod tests {
         self,
         InternSet,
     };
-    use edbn::entities::{
+    use edbn::causets::{
         OpType,
     };
     use allegrosql_promises::{
@@ -2615,7 +2615,7 @@ mod tests {
                           [?causetx :edb/causecausetxInstant ?ms ?causetx true]]");
 
         // Here, "foo", "bar", and "baz", all refer to the same reference, but none of them actually
-        // upsert to existing entities.
+        // upsert to existing causets.
         let report = assert_transact!(conn, r#"[
             [:edb/add "foo" :page/id "id"]
             [:edb/add "bar" :edb/causetid :bar/bar]

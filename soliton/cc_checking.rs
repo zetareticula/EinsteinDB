@@ -1,4 +1,4 @@
-// Whtcorps Inc 2022 Apache 2.0 License; All Rights Reserved.
+// Zeta Reticula Inc 2024 Apache 2.0 License; All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file File except in compliance with the License. You may obtain a copy of the
@@ -8,16 +8,45 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::convert::From;
+use std::fmt;
+use std::ops::{Deref, Index};
+use std::slice;
+use std::collections::HashMap;
 
-// #[macro_export]
-// macro_rules! einsteindb_macro {
-//     ($($tokens:tt)*) => {
-//         $crate::einsteindb_macro_impl!($($tokens)*)
-//     };
-// }
-//
-//
-//
+
+use ::std::rc::{
+    Rc,
+};
+
+use ::std::sync::{
+    Arc,
+};
+
+
+
+
+
+pub trait FromRc<T> {
+    fn from_rc(val: Rc<T>) -> Self;
+    fn from_arc(val: Arc<T>) -> Self;
+}
+
+impl<T> FromRc<T> for Rc<T> where T: Sized + Clone {
+    fn from_rc(val: Rc<T>) -> Self {
+        val.clone()
+    }
+
+    fn from_arc(val: Arc<T>) -> Self {
+        match ::std::sync::Arc::<T>::try_unwrap(val) {
+            Ok(v) => Self::new(v),
+            Err(r) => Self::new(r.cloned()),
+        }
+    }
+}
+
 
 #[macro_export]
 macro_rules! einsteindb_macro {
@@ -46,26 +75,9 @@ macro_rules! einsteindb_macro_impl {
     };
     ($($tokens:tt)*) => {
         $crate::einsteindb_macro_impl!($($tokens)*)
-    };
-    ($($tokens:tt)*) => {
-        $crate::einsteindb_macro_impl!($($tokens)*)
-    };
-    ($($tokens:tt)*) => {
-        $crate::einsteindb_macro_impl!($($tokens)*)
-    };
-    ($($tokens:tt)*) => {
-        $crate::einsteindb_macro_impl!($($tokens)*)
-    };
-    ($($tokens:tt)*) => {
-        $crate::einsteindb_macro_impl!($($tokens)*)
-    };
-    ($($tokens:tt)*) => {
-        $crate::einsteindb_macro_impl!($($tokens)*)
-    };
-    ($($tokens:tt)*) => {
-        $crate::einsteindb_macro_impl!($($tokens)*)
-    };
+
 }
+
 
 
 
@@ -92,6 +104,32 @@ enum Type {
     Array(Box<Type>),
     Func(Vec<Type>, Box<Type>),
 }
+
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Type::Int => write!(f, "int"),
+            Type::Bool => write!(f, "bool"),
+            Type::String => write!(f, "string"),
+            Type::Void => write!(f, "void"),
+            Type::Array(type_) => write!(f, "array<{}>", type_),
+            Type::Func(args, ret) => {
+                write!(f, "func(")?;
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", arg)?;
+                }
+                write!(f, ") -> {}", ret)
+            },
+        }
+    }
+}
+
+
+
 
 
 
@@ -154,29 +192,13 @@ impl TypeChecker {
 //lets clear that out with some code
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-/// A variable binding.
-/// This is used to represent a variable binding in a [`Let`] expression.
-/// [`Let`]: enum.Expr.html#variant.Let
-/// [`Ident`]: enum.Expr.html#variant.Ident
-/// [`Index`]: enum.Expr.html#variant.Index
-/// [`Slice`]: enum.Expr.html#variant.Slice
-/// [`Cast`]: enum.Expr.html#variant.Cast
-/// [`Dot`]: enum.Expr.html#variant.Dot
-/// [`Field`]: enum.Expr.html#variant.Field
-/// [`Tuple`]: enum.Expr.html#variant.Tuple
-/// [`List`]: enum.Expr.html#variant.List
-/// [`Map`]: enum.Expr.html#variant.Map
-/// [`Break`]: enum.Expr.html#variant.Break
-/// [`Continue`]: enum.Expr.html#variant.Continue
-/// [`Return`]: enum.Expr.html#variant.Return
-/// [`Try`]: enum.Expr.html#variant.Try
-/// [`Throw`]: enum.Expr.html#variant.Throw
-/// [`Yield`]: enum.Expr.html#variant.Yield
-/// [`While`]: enum.Expr.html#variant.While
-/// [`For`]: enum.Expr.html#variant.For
-///
-///
-
+pub struct Expr {
+    pub causetid: String,
+    pub solitonid: u64,
+    pub name: String,
+    pub value: Box<Expr>,
+    pub body: Box<Expr>,
+}
 
 pub struct Let {
     pub causetid: String,
@@ -226,6 +248,10 @@ pub fn check_type_map(type_map: &TypeMap) -> Result<(), String> {
     type_checker.type_map = type_map.clone();
     type_checker.check_type_map()
 }
+
+
+/// The check type function is used to check the type of the expression.
+/// with the type map provided.
 
 
 impl TypeChecker {
@@ -278,209 +304,43 @@ impl TypeChecker {
 /// In the future, we might change this choice, or allow the consumer to specify the robustness of
 /// the type checking desired, since there is a cost to providing helpful diagnostics.
 pub(crate) fn check_terms(terms: &[Term]) -> Result<(), String> {
+    let mut errors: TypeDisagreements = TypeDisagreements::default();
+    
     for term in terms {
-        check_term(term)?;
+        check_term(term, &mut errors)?;
     }
-    Ok(())
-}
-
-
-/// Ensure that the given term type check.
-/// We try to be maximally helpful by yielding every malformed causet, rather than only the first.
-
-
-pub(crate) fn causetq_term_type(term: &Term) -> Result<(), String> {
+    
     if errors.is_empty() {
         Ok(())
     } else {
-            for v in ars.add.iter().chain(ars.retract.iter()) {
-                if let Some(type_) = term.type_map.get(v) {
-                    if type_ != &Type::Int {
-                        errors.push(TypeDisagreement {
-                            expr: Expr::Ident(v.clone()),
-                            solitonid: v.clone(),
-                            expected: Type::Int,
-                            actual: type_.clone(),
-                        });
-                    }
-                }
-
-            }
-            for v in ars.add.iter().chain(ars.retract.iter()) {
-                if let Some(type_) = term.type_map.get(v) {
-                    if type_ != &Type::Int {
-                        errors.push(TypeDisagreement {
-                            expr: Expr::Ident(v.clone()),
-                            solitonid: v.clone(),
-                            expected: Type::Int,
-                            actual: type_.clone(),
-                        });
-                    }
-                }
-                if attribute.causet_locale_type != v.causet_locale_type() {
-                    errors.push(TypeDisagreement {
-                        expr: Expr::Ident(v.clone()),
-                        solitonid: v.clone(),
-                        expected: attribute.causet_locale_type,
-                        actual: v.causet_locale_type(),
-                    });
-
-                }
-
-            }
-
-            for v in ars.add.iter().chain(ars.retract.iter()) {
-                if let Some(type_) = term.type_map.get(v) {
-                    if type_ != &Type::Int {
-                        errors.push(TypeDisagreement {
-                            expr: Expr::Ident(v.clone()),
-                            solitonid: v.clone(),
-                            expected: Type::Int,
-                            actual: type_.clone(),
-                        });
-                    }
-                    errors.insert((e, a, v.clone()), attribute.causet_locale_type);
-
-
-                }
-
-                ///close the causet
-                /// if the causet is closed, then the causet is closed
-                
-                if attribute.causet_locale_type != v.causet_locale_type() {
-                    errors.push(TypeDisagreement {
-                        expr: Expr::Ident(v.clone()),
-                        solitonid: v.clone(),
-                        expected: attribute.causet_locale_type,
-                        actual: v.causet_locale_type(),
-                    });
-
-                }
-
-
-            }
-            for v in ars.add.iter().chain(ars.retract.iter()) {
-                if let Some(type_) = term.type_map.get(v) {
-                    if type_ != &Type::Int {
-                        errors.push(TypeDisagreement {
-                            expr: Expr::Ident(v.clone()),
-                            solitonid: v.clone(),
-                            expected: Type::Int,
-                            actual: type_.clone(),
-                        });
-                    }
-                    errors.insert((e, a, v.clone()), attribute.causet_locale_type);
-                }
-
-                ///close the causet
-            }
-
-        //errors.push(TypeDisagreement {
-        //    expr: Expr::Ident(v.clone()),
-        //    solitonid: v.clone(),
-        //    expected: attribute.causet_locale_type,
-        //    actual: v.causet_locale_type(),
-        //});
-        //errors.insert((e, a, v.clone()), attribute.causet_locale_type);
-
-        errors.push(TypeDisagreement {
-            expr: Expr::Ident(v.clone()),
-            solitonid: v.clone(),
-            expected: attribute.causet_locale_type,
-            actual: v.causet_locale_type(),
-        });
-
-        }
-
-    Err(errors.to_string())
-
+        Err(errors.to_string())
     }
+}
 
-    pub(crate) fn check_term(term: &Term) -> Result<(), String> {
-        let mut type_checker = TypeChecker::new();
-
-        let mut errors: TypeDisagreements = TypeDisagreements::default();
-
-        for expr in &term.exprs {
-            for (solitonid, type_) in &term.type_map {
-                type_checker.type_map.insert(solitonid.clone(), type_.clone());
-            }
-
-            let expr_type = type_checker.check_type(expr)?;
-            let expr_type = type_checker.type_map.get(solitonid).unwrap();
-            if expr_type != type_ {
-                errors.push(TypeDisagreement {
-                    expr: expr.clone(),
-                    solitonid: solitonid.clone(),
-                    expected: type_.clone(),
-                    actual: expr_type.clone(),
-                });
-            }
+/// Ensure that the given term type check.
+pub(crate) fn check_term(term: &Term, errors: &mut TypeDisagreements) -> Result<(), String> {
+    let mut type_checker = TypeChecker::new();
+    
+    for expr in &term.exprs {
+        for (solitonid, type_) in &term.type_map {
+            type_checker.type_map.insert(solitonid.clone(), type_.clone());
         }
-
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors.to_string())
+        
+        let expr_type = type_checker.check_type(expr)?;
+        let expr_type = type_checker.type_map.get(solitonid).unwrap();
+        
+        if expr_type != type_ {
+            errors.push(TypeDisagreement {
+                expr: expr.clone(),
+                solitonid: solitonid.clone(),
+                expected: type_.clone(),
+                actual: expr_type.clone(),
+            });
         }
     }
-
-
-    /// Ensure that the given term type check.
-    /// This function is similar to check_term, but it does not yield any errors.
-    /// Instead, it returns a list of all the errors that were found.
-    /// This is useful for testing.
-
-
-
-    pub(crate) fn check_term_silent(term: &Term) -> TypeDisagreements {
-        let mut type_checker = TypeChecker::new();
-
-        let mut errors: TypeDisagreements = TypeDisagreements::default();
-
-        for expr in &term.exprs {
-            for (solitonid, type_) in &term.type_map {
-                type_checker.type_map.insert(solitonid.clone(), type_.clone());
-            }
-
-            let expr_type = type_checker.check_type(expr);
-            let expr_type = type_checker.type_map.get(solitonid).unwrap();
-            if expr_type != type_ {
-                errors.push(TypeDisagreement {
-                    expr: expr.clone(),
-                    solitonid: solitonid.clone(),
-                    expected: type_.clone(),
-                    actual: expr_type.clone(),
-                });
-            }
-        }
-
-        errors
-    }
-
-
-    /// Ensure that the given term type check.
-    /// We try to be maximally helpful by yielding every malformed causet, rather than only the first.
-    /// In the future, we might change this choice, or allow the consumer to specify the robustness of
-    /// the type checking desired, since there is a cost to providing helpful diagnostics.
-    /// pub(crate) fn check_term(term: &Term) -> Result<(), String> {
-    ///    let mut type_checker = TypeChecker::new();
-    ///   let mut errors: TypeDisagreements = TypeDisagreements::default();
-    ///  for expr in &term.exprs {
-    ///   for (solitonid, type_) in &term.type_map {
-    ///   type_checker.type_map.insert(solitonid.clone(), type_.clone());
-    /// causet_locale_type = v.causet_locale_type();
-    /// assert_eq!(cache.get("foo").unwrap().value(), "bar");
-    /// assert_eq!(cache.get("foo").unwrap().value(), "bar");
-    /// assert_eq!(cache.get("foo").unwrap().value(), "bar");
-    ///
-    /// assert_eq!(cache.get("foo").unwrap().value(), "bar");
-    /// assert_eq!(cache.get("foo").unwrap().value(), "bar");
-    ///
-    ///
-    /// assert_eq!(cache.get("foo").unwrap().value(), "bar");
-    /// assert_eq!(cache.get("foo").unwrap().value(), "bar");
-
+    
+    Ok(())
+}
 
 /// Ensure that the given terms obey the cardinality restrictions of the given topograph.
 ///
@@ -494,30 +354,16 @@ pub(crate) fn causetq_term_type(term: &Term) -> Result<(), String> {
 /// We try to be maximally helpful by yielding every malformed set of causets, rather than just the
 /// first set, or even the first conflict.  In the future, we might change this choice, or allow the
 /// consumer to specify the robustness of the cardinality checking desired.
-
-
-/// Ensure that the given terms obey the cardinality restrictions of the given topograph.
-
-
-
-
-
-
-    /// Ensure that the given term type check.
-    /// We try to be maximally helpful by yielding every malformed causet, rather than only the first.
-
-
-
-/// Ensure that the given terms obey the cardinality restrictions of the given topograph.
-/// 
-/// That is, ensure that any cardinality one attribute is added with at most one distinct causet_locale for
-/// any specific causet (although that one causet_locale may be repeated for the given causet).
-/// It is an error to:
-/// 
-/// - add two distinct causet_locales for the same cardinality one attribute and causet in a single transaction
-/// - add and remove the same causet_locales for the same attribute and causet in a single transaction
-/// 
-/// We try to be maximally helpful by yielding every malformed set of causets, rather than just the
-/// first set, or even the first conflict.  In the future, we might change this choice, or allow the
-/// consumer to specify the robustness of the cardinality checking desired.
-/// 
+pub(crate) fn check_terms_cardinality(terms: &[Term], topograph: &Topograph) -> Result<(), String> {
+    let mut errors: CardinalityErrors = CardinalityErrors::default();
+    
+    for term in terms {
+        check_term_cardinality(term, topograph, &mut errors);
+    }
+    
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors.to_string())
+    }
+}

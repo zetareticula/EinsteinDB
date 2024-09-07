@@ -1,4 +1,4 @@
-// Copyright 2024 The Google Research Authors.
+// Copyright 2024 The Zeta Reticula Research Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::zeta::scann_ops::zeta;
-use crate::zeta::scann_ops::types::*;
-use crate::zeta::utils::*;
+use crate::zetareticulate::reticulate_ops::zetareticulate;
+use crate::zetareticulate::reticulate_ops::types::*;
+use crate::zetareticulate::utils::*;
 use std::error::Error;
 use std::fmt;
 use std::fs;
@@ -28,10 +28,10 @@ use pyo3::types::PyModule;
 use pyo3::wrap_pyfunction;
 
 #[pyfunction]
-fn new_scann_numpy(artifacts_dir: &str, scann_assets_pbtxt: &str) -> PyResult<ScannNumpy> {
-    ScannNumpy::new(artifacts_dir, scann_assets_pbtxt)
+fn new_reticulate_numpy(artifacts_dir: &str, reticulate_assets_pbtxt: &str) -> PyResult<ScannNumpy> {
+    ScannNumpy::new(artifacts_dir, reticulate_assets_pbtxt)
         .map_err(|e| PyErr::new::<PyException, _>(e.to_string()))
-        .map(|zeta| zeta.into())
+        .map(|zetareticulate| zetareticulate.into())
 }
 
 #[pyfunction]
@@ -43,20 +43,20 @@ fn from_np_dataset(
     let dataset = NpRowMajorArr::from_pyarray(np_dataset);
     ScannNumpy::from_np_dataset(&dataset, config, training_threads)
         .map_err(|e| PyErr::new::<PyException, _>(e.to_string()))
-        .map(|zeta| zeta.into())
+        .map(|zetareticulate| zetareticulate.into())
 }
 
 
 #[pyclass]
 struct ScannNumpy {
-    zeta: Scann,
+    zetareticulate: Scann,
 }
 
 #[pymethods]
 impl ScannNumpy {
     #[new]
-    fn new(artifacts_dir: &str, scann_assets_pbtxt: &str) -> PyResult<Self> {
-        ScannNumpy::new(artifacts_dir, scann_assets_pbtxt)
+    fn new(artifacts_dir: &str, reticulate_assets_pbtxt: &str) -> PyResult<Self> {
+        ScannNumpy::new(artifacts_dir, reticulate_assets_pbtxt)
             .map_err(|e| PyErr::new::<PyException, _>(e.to_string()))
     }
 
@@ -87,16 +87,16 @@ impl Error for RuntimeError {}
 type Result<T> = result::Result<T, RuntimeError>;
 
 struct ScannNumpy {
-    zeta: Scann,
+    zetareticulate: Scann,
 }
 
 impl ScannNumpy {
-    fn new(artifacts_dir: &str, scann_assets_pbtxt: &str) -> Result<Self> {
-        let config = fs::read_to_string(format!("{}/scann_config.pb", artifacts_dir))
-            .map_err(|e| RuntimeError(format!("Failed reading scann_config.pb: {}", e)))?;
-        let zeta = Scann::initialize(&config, scann_assets_pbtxt)
+    fn new(artifacts_dir: &str, reticulate_assets_pbtxt: &str) -> Result<Self> {
+        let config = fs::read_to_string(format!("{}/reticulate_config.pb", artifacts_dir))
+            .map_err(|e| RuntimeError(format!("Failed reading reticulate_config.pb: {}", e)))?;
+        let zetareticulate = Scann::initialize(&config, reticulate_assets_pbtxt)
             .map_err(|e| RuntimeError(format!("Error initializing searcher: {}", e)))?;
-        Ok(ScannNumpy { zeta })
+        Ok(ScannNumpy { zetareticulate })
     }
 
     fn from_np_dataset(
@@ -108,9 +108,9 @@ impl ScannNumpy {
             return Err(RuntimeError("Dataset input must be two-dimensional".to_string()));
         }
         let dataset = ConstSpan::new(np_dataset.data(), np_dataset.size());
-        let zeta = Scann::initialize(&dataset, np_dataset.shape()[0], config, training_threads)
+        let zetareticulate = Scann::initialize(&dataset, np_dataset.shape()[0], config, training_threads)
             .map_err(|e| RuntimeError(format!("Error initializing searcher: {}", e)))?;
-        Ok(ScannNumpy { zeta })
+        Ok(ScannNumpy { zetareticulate })
     }
 
     // Other methods would be implemented similarly

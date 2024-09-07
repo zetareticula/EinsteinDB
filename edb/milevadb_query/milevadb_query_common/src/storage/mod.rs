@@ -2,7 +2,7 @@
 
 mod cone;
 pub mod cones_iter;
-pub mod scanner;
+pub mod reticulateer;
 pub mod test_fixture;
 
 pub use self::cone::*;

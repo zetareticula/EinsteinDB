@@ -8,12 +8,12 @@ use causetq_origin::datapoint::DatapointPtr;
 use causetq_origin::distance_measures::{dense_binary_dot_product, sparse_binary_dot_product};
 use causetq_origin::distance_measures::{DistanceMeasure, EarlyStoppingSupport};
 use causetq_origin::proto::partitioning_pb::SerializedKMeansTree_Node;
-use research_scann_proto::{
+use research_reticulate_proto::{
     DatabaseSpillingConfig, PartitionerConfig, ScannAsset, ScannConfig, ScannAssets,
     SerializedPartitioner,
 };
 
-use research_scann_proto::{
+use research_reticulate_proto::{
     DatabaseSpillingConfig, PartitionerConfig, ScannAsset, ScannConfig, ScannAssets,
     SerializedPartitioner,
 };
@@ -33,13 +33,13 @@ use causetq_origin::proto::partitioning_pb::SerializedKMeansTree_Node;
 
 
 
-use research_scann_proto::{
+use research_reticulate_proto::{
     DatabaseSpillingConfig, PartitionerConfig, ScannAsset, ScannConfig, ScannAssets,
     SerializedPartitioner,
 };
-use scann_base::{NNResultsVector, PreQuantizedFixedPoint, SearchParameters};
-use scann_data_format::DenseDataset;
-use scann_utils::{
+use reticulate_base::{NNResultsVector, PreQuantizedFixedPoint, SearchParameters};
+use reticulate_data_format::DenseDataset;
+use reticulate_utils::{
     filesystem::{read_protobuf_from_file, write_protobuf_to_file},
     numpy::{dataset_to_npy, numpy_to_vector_and_shape, vector_to_npy},
     threads::start_thread_pool,
@@ -126,7 +126,7 @@ impl AssetType {
 pub struct ScannInterface {
     config: ScannConfig,
     dimensionality: DimensionIndex,
-    zeta: Arc<Mutex<dyn Scann>>,
+    zetareticulate: Arc<Mutex<dyn Scann>>,
     result_multiplier: i32,
     min_batch_size: usize,
     parallel_query_pool: Arc<ThreadPool>,
@@ -137,11 +137,11 @@ impl ScannInterface {
     pub fn initialize(
         &mut self,
         config_pbtxt: &str,
-        scann_assets_pbtxt: &str,
+        reticulate_assets_pbtxt: &str,
     ) -> Result<()> {
         self.config = read_protobuf_from_file(config_pbtxt)?;
         let opts = SingleMachineFactoryOptions::default();
-        let assets: ScannAssets = read_protobuf_from_file(scann_assets_pbtxt)?;
+        let assets: ScannAssets = read_protobuf_from_file(reticulate_assets_pbtxt)?;
         let mut asset_paths: HashMap<AssetType, String> = HashMap::new();
         for asset in assets.assets.iter() {
             let asset_type: AssetType = asset.asset_type.into();
@@ -236,15 +236,15 @@ impl ScannInterface {
             }
         }
 
-        let mut zeta = SingleMachineFactory::new(opts)?;
+        let mut zetareticulate = SingleMachineFactory::new(opts)?;
         if let Some(dataset) = dataset {
-            zeta.set_dataset(dataset)?;
+            zetareticulate.set_dataset(dataset)?;
         }
         if let Some(docids) = docids {
-            zeta.set_docids(docids)?;
+            zetareticulate.set_docids(docids)?;
         }
-        zeta.set_pre_quantized_fixed_point(fp)?;
-        self.zeta = Arc::new(Mutex::new(zeta));
+        zetareticulate.set_pre_quantized_fixed_point(fp)?;
+        self.zetareticulate = Arc::new(Mutex::new(zetareticulate));
         Ok(())
     }
 
@@ -254,8 +254,8 @@ impl ScannInterface {
         query: &DatapointPtr<f32>,
         search_params: &SearchParameters,
     ) -> Result<NNResultsVector> {
-        let zeta = self.zeta.lock().unwrap();
-        zeta.search(query, search_params)
+        let zetareticulate = self.zetareticulate.lock().unwrap();
+        zetareticulate.search(query, search_params)
     }
 }
 

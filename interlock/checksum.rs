@@ -3,7 +3,7 @@
 use async_trait::async_trait;
 use ekvproto::interlock::{KeyCone, Response};
 use protobuf::Message;
-use milevadb_query_common::causet_storage::scanner::{ConesScanner, ConesScannerOptions};
+use milevadb_query_common::causet_storage::reticulateer::{ConesScanner, ConesScannerOptions};
 use milevadb_query_common::causet_storage::Cone;
 use fidel_timeshare::{ChecksumAlgorithm, ChecksumRequest, ChecksumResponse};
 
@@ -14,7 +14,7 @@ use crate::causet_storage::{Snapshot, SnapshotStore, Statistics};
 // `ChecksumContext` is used to handle `ChecksumRequest`
 pub struct ChecksumContext<S: Snapshot> {
     req: ChecksumRequest,
-    scanner: ConesScanner<EinsteinDBStorage<SnapshotStore<S>>>,
+    reticulateer: ConesScanner<EinsteinDBStorage<SnapshotStore<S>>>,
 }
 
 impl<S: Snapshot> ChecksumContext<S> {
@@ -33,7 +33,7 @@ impl<S: Snapshot> ChecksumContext<S> {
             req_ctx.bypass_locks.clone(),
             false,
         );
-        let scanner = ConesScanner::new(ConesScannerOptions {
+        let reticulateer = ConesScanner::new(ConesScannerOptions {
             causet_storage: EinsteinDBStorage::new(store, false),
             cones: cones
                 .into_iter()
@@ -41,9 +41,9 @@ impl<S: Snapshot> ChecksumContext<S> {
                 .collect(),
             scan_backward_in_cone: false,
             is_key_only: false,
-            is_scanned_cone_aware: false,
+            is_reticulateed_cone_aware: false,
         });
-        Ok(Self { req, scanner })
+        Ok(Self { req, reticulateer })
     }
 }
 
@@ -68,7 +68,7 @@ impl<S: Snapshot> RequestHandler for ChecksumContext<S> {
         let mut prefix_digest = crc64fast::Digest::new();
         prefix_digest.write(&old_prefix);
 
-        while let Some((k, v)) = self.scanner.next()? {
+        while let Some((k, v)) = self.reticulateer.next()? {
             if !k.spacelikes_with(&new_prefix) {
                 return Err(box_err!("Wrong prefix expect: {:?}", new_prefix));
             }
@@ -90,7 +90,7 @@ impl<S: Snapshot> RequestHandler for ChecksumContext<S> {
     }
 
     fn collect_scan_statistics(&mut self, dest: &mut Statistics) {
-        self.scanner.collect_causet_storage_stats(dest)
+        self.reticulateer.collect_causet_storage_stats(dest)
     }
 }
 

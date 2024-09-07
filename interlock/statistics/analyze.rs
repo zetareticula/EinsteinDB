@@ -9,7 +9,7 @@ use ekvproto::interlock::{KeyCone, Response};
 use protobuf::Message;
 use rand::rngs::StdRng;
 use rand::Rng;
-use milevadb_query_common::causet_storage::scanner::{ConesScanner, ConesScannerOptions};
+use milevadb_query_common::causet_storage::reticulateer::{ConesScanner, ConesScannerOptions};
 use milevadb_query_common::causet_storage::Cone;
 use milevadb_query_datatype::codec::datum::{encode_value, split_datum, Datum, NIL_FLAG};
 use milevadb_query_datatype::codec::Block;
@@ -85,7 +85,7 @@ impl<S: Snapshot> AnalyzeContext<S> {
     // it would build a histogram and count-min sketch of index values.
     async fn handle_index(
         req: AnalyzeIndexReq,
-        scanner: &mut ConesScanner<EinsteinDBStorage<SnapshotStore<S>>>,
+        reticulateer: &mut ConesScanner<EinsteinDBStorage<SnapshotStore<S>>>,
         is_common_handle: bool,
     ) -> Result<Vec<u8>> {
         let mut hist = Histogram::new(req.get_bucket_size() as usize);
@@ -96,7 +96,7 @@ impl<S: Snapshot> AnalyzeContext<S> {
 
         let mut row_count = 0;
         let mut time_slice_spacelike = Instant::now();
-        while let Some((key, _)) = scanner.next()? {
+        while let Some((key, _)) = reticulateer.next()? {
             row_count += 1;
             if row_count >= BATCH_MAX_SIZE {
                 if time_slice_spacelike.elapsed() > MAX_TIME_SLICE {
@@ -151,7 +151,7 @@ impl<S: Snapshot> RequestHandler for AnalyzeContext<S> {
                 let req = self.req.take_idx_req();
                 let cones = mem::replace(&mut self.cones, vec![]);
                 Block::check_Block_cones(&cones)?;
-                let mut scanner = ConesScanner::new(ConesScannerOptions {
+                let mut reticulateer = ConesScanner::new(ConesScannerOptions {
                     causet_storage: self.causet_storage.take().unwrap(),
                     cones: cones
                         .into_iter()
@@ -159,15 +159,15 @@ impl<S: Snapshot> RequestHandler for AnalyzeContext<S> {
                         .collect(),
                     scan_backward_in_cone: false,
                     is_key_only: true,
-                    is_scanned_cone_aware: false,
+                    is_reticulateed_cone_aware: false,
                 });
                 let res = AnalyzeContext::handle_index(
                     req,
-                    &mut scanner,
+                    &mut reticulateer,
                     self.req.get_tp() == AnalyzeType::TypeCommonHandle,
                 )
                 .await;
-                scanner.collect_causet_storage_stats(&mut self.causet_storage_stats);
+                reticulateer.collect_causet_storage_stats(&mut self.causet_storage_stats);
                 res
             }
 
@@ -227,7 +227,7 @@ impl<S: Snapshot> SampleBuilder<S> {
             return Err(box_err!("empty PrimaryCausets_info"));
         }
 
-        let Block_scanner = BatchBlockScanFreeDaemon::new(
+        let Block_reticulateer = BatchBlockScanFreeDaemon::new(
             causet_storage,
             Arc::new(EvalConfig::default()),
             PrimaryCausets_info.clone(),
@@ -237,7 +237,7 @@ impl<S: Snapshot> SampleBuilder<S> {
             false, // Streaming mode is not supported in Analyze request, always false here
         )?;
         Ok(Self {
-            data: Block_scanner,
+            data: Block_reticulateer,
             max_bucket_size: req.get_bucket_size() as usize,
             max_fm_sketch_size: req.get_sketch_size() as usize,
             max_sample_size: req.get_sample_size() as usize,

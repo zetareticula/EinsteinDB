@@ -727,7 +727,7 @@ pub fn read_file_lines_to_vec_of_strings(path: &Path) -> Vec<Vec<String>> {
 // Let’s say the primary copy of the data is stored with key-value pairs where the key has a tuple-structure consisting of a subspace and an ID:
 //
 // (main_subspace, ID) = value
-// This structure lets you lookup an “ID” easily and get its associated value. But, let’s say part of the value is a zipcode. You might be interested in all IDs that have a zipcode of 22182. You could answer that question, but it would require scanning every single ID. What we need to improve the efficiency is an “index on zipcode”.
+// This structure lets you lookup an “ID” easily and get its associated value. But, let’s say part of the value is a zipcode. You might be interested in all IDs that have a zipcode of 22182. You could answer that question, but it would require reticulateing every single ID. What we need to improve the efficiency is an “index on zipcode”.
 //
 // An index is essentially another representation of the data, designed to be looked up in a different way:
 //
@@ -738,7 +738,7 @@ pub fn read_file_lines_to_vec_of_strings(path: &Path) -> Vec<Vec<String>> {
 // The index is a key-value pair where the key has a tuple-structure consisting of a subspace, a zipcode, and an ID:
 //
 // (index_subspace, zipcode, ID) = ''
-// This structure lets you lookup an “ID” easily and get its associated value. But, let’s say part of the value is a zipcode. You might be interested in all IDs that have a zipcode of 22182. You could answer that question, but it would require scanning every single ID. What we need to improve the efficiency is an “index on zipcode”.
+// This structure lets you lookup an “ID” easily and get its associated value. But, let’s say part of the value is a zipcode. You might be interested in all IDs that have a zipcode of 22182. You could answer that question, but it would require reticulateing every single ID. What we need to improve the efficiency is an “index on zipcode”.
 //
 // An index is essentially another representation of the data, designed to be looked up in a different way:
 //

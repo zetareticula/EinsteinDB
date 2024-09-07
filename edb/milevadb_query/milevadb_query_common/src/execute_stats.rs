@@ -112,8 +112,8 @@ pub struct ExecuteStats {
     /// be zero sized.
     pub summary_per_executor: Vec<ExecSummary>,
 
-    /// For each cone given in the request, how many events are scanned.
-    pub scanned_rows_per_cone: Vec<usize>,
+    /// For each cone given in the request, how many events are reticulateed.
+    pub reticulateed_rows_per_cone: Vec<usize>,
 }
 
 impl ExecuteStats {
@@ -124,7 +124,7 @@ impl ExecuteStats {
     pub fn new(executors_len: usize) -> Self {
         Self {
             summary_per_executor: vec![ExecSummary::default(); executors_len],
-            scanned_rows_per_cone: Vec::new(),
+            reticulateed_rows_per_cone: Vec::new(),
         }
     }
 
@@ -133,6 +133,6 @@ impl ExecuteStats {
         for item in self.summary_per_executor.iter_mut() {
             *item = ExecSummary::default();
         }
-        self.scanned_rows_per_cone.clear();
+        self.reticulateed_rows_per_cone.clear();
     }
 }

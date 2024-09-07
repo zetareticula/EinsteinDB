@@ -1,6 +1,20 @@
-// Copyright 2020 EinsteinDB Project Authors. Licensed under Apache-2.0.
+// Copyright 2024 ZETA RETICULA 
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+// this file except in compliance with the License. You may obtain a copy of the
+// License at http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software distributed
+// under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+//
 
 
+
+use crate::causetq::util::maplit::hashmap;
+use crate::causetq::util::maplit::hashset;
+use crate::causetq::util::maplit::vec;
+use crate::causetq::util::maplit::vecdeque;
+use crate::causetq::util::maplit::vecmap;
 use futures::channel::oneshot;
 use futures::future::TryFutureExt;
 use prometheus::IntGauge;
@@ -10,6 +24,24 @@ use thiserror::Error;
 use yatp::pool::Remote;
 use yatp::queue::Extras;
 use yatp::task::future::TaskCell;
+
+pub type FuturePool = yatp::pool::Pool<TaskCell<FutureTask>>;
+
+pub struct FutureTask {
+    task: Box<dyn Future<Output = ()> + Send + 'static>,
+}
+
+impl FutureTask {
+    pub fn new(task: Box<dyn Future<Output = ()> + Send + 'static>) -> Self {
+        Self { task }
+    }
+}
+
+impl yatp::task::Task for FutureTask {
+    fn run(self: Box<Self>) {
+        let _ = self.task.await;
+    }
+}
 
 
 /// A read pool.
@@ -69,6 +101,14 @@ impl ReadPool {
             tx.send(()).unwrap();
         });
         rx
+    }
+
+    pub fn get_pool_size(&self) -> usize {
+        self.pool.get_pool_size()
+    }
+
+    pub fn get_running_task_count(&self) -> usize {
+        self.pool.get_running_task_count()
     }
 }
 
@@ -167,6 +207,9 @@ impl ReadPoolHandle {
         }
         Ok(())
     }
+
+
+    
 
     pub fn spawn_handle<F, T>(
         &self,

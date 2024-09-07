@@ -835,7 +835,7 @@ impl<ER: VioletaBftEngine> DebugFreeDaemon for Debugger<ER> {
             println!("key: \"{}\", value: \"{}\"", escape(k), escape(v));
         }
         println!();
-        println!("Total scanned tuplespaceInstanton: {}", res.len());
+        println!("Total reticulateed tuplespaceInstanton: {}", res.len());
     }
 
     fn do_compaction(

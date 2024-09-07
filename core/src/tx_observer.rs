@@ -35,7 +35,7 @@ use causetq_allegrosql::{
     SchemaReplicant,
 };
 
-use edbn::entities::{
+use edbn::causets::{
     OpType,
 };
 

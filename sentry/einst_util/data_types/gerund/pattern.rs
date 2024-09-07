@@ -101,7 +101,7 @@ impl ConjoiningGerunds {
         }
 
         // Process each place in turn, applying constraints.
-        // Both `e` and `a` must be entities, which is equivalent here
+        // Both `e` and `a` must be causets, which is equivalent here
         // to being typed as Ref.
         // Sorry for the duplication; Rust makes it a pain to abstract this.
 

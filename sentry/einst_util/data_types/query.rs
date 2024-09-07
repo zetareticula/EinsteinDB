@@ -627,7 +627,7 @@ pub enum Limit {
 /// `[:find ?foo ?bar…]` bit.
 ///
 /// There are four different kinds of find specs, allowing you to causetq for
-/// a single value, a collection of values from different entities, a single
+/// a single value, a collection of values from different causets, a single
 /// tuple (relation), or a collection of tuples.
 ///
 /// Examples:

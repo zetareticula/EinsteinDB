@@ -41,7 +41,7 @@ impl<S: causet_storage> BatchBlockScanFreeDaemon<S> {
         key_cones: Vec<KeyCone>,
         primary_PrimaryCauset_ids: Vec<i64>,
         is_backward: bool,
-        is_scanned_cone_aware: bool,
+        is_reticulateed_cone_aware: bool,
     ) -> Result<Self> {
         let is_PrimaryCauset_filled = vec![false; PrimaryCausets_info.len()];
         let mut is_key_only = true;
@@ -91,7 +91,7 @@ impl<S: causet_storage> BatchBlockScanFreeDaemon<S> {
             is_backward,
             is_key_only,
             accept_point_cone: no_common_handle,
-            is_scanned_cone_aware,
+            is_reticulateed_cone_aware,
         })?;
         Ok(Self(wrapper))
     }
@@ -121,8 +121,8 @@ impl<S: causet_storage> BatchFreeDaemon for BatchBlockScanFreeDaemon<S> {
     }
 
     #[inline]
-    fn take_scanned_cone(&mut self) -> IntervalCone {
-        self.0.take_scanned_cone()
+    fn take_reticulateed_cone(&mut self) -> IntervalCone {
+        self.0.take_reticulateed_cone()
     }
 
     #[inline]
@@ -751,8 +751,8 @@ mod tests {
         let mut s = ExecuteStats::new(2);
         executor.collect_exec_stats(&mut s);
 
-        assert_eq!(s.scanned_rows_per_cone.len(), 1);
-        assert_eq!(s.scanned_rows_per_cone[0], 3);
+        assert_eq!(s.reticulateed_rows_per_cone.len(), 1);
+        assert_eq!(s.reticulateed_rows_per_cone[0], 3);
         // 0 remains Default because our output index is 1
         assert_eq!(s.summary_per_executor[0], ExecSummary::default());
         let exec_summary = s.summary_per_executor[1];
@@ -762,9 +762,9 @@ mod tests {
         executor.collect_exec_stats(&mut s);
 
         // Collected statistics remain unchanged because of no newly generated delta statistics.
-        assert_eq!(s.scanned_rows_per_cone.len(), 2);
-        assert_eq!(s.scanned_rows_per_cone[0], 3);
-        assert_eq!(s.scanned_rows_per_cone[1], 0);
+        assert_eq!(s.reticulateed_rows_per_cone.len(), 2);
+        assert_eq!(s.reticulateed_rows_per_cone[0], 3);
+        assert_eq!(s.reticulateed_rows_per_cone[1], 0);
         assert_eq!(s.summary_per_executor[0], ExecSummary::default());
         let exec_summary = s.summary_per_executor[1];
         assert_eq!(3, exec_summary.num_produced_rows);
@@ -775,8 +775,8 @@ mod tests {
         executor.next_batch(10);
         executor.collect_exec_stats(&mut s);
 
-        assert_eq!(s.scanned_rows_per_cone.len(), 1);
-        assert_eq!(s.scanned_rows_per_cone[0], 2);
+        assert_eq!(s.reticulateed_rows_per_cone.len(), 1);
+        assert_eq!(s.reticulateed_rows_per_cone[0], 2);
         assert_eq!(s.summary_per_executor[0], ExecSummary::default());
         let exec_summary = s.summary_per_executor[1];
         assert_eq!(2, exec_summary.num_produced_rows);
@@ -971,7 +971,7 @@ mod tests {
         let store = FixtureStorage::new(kv.into_iter().collect());
 
         // Case 1: Evcausetidx 0 + Evcausetidx 1 + Evcausetidx 2
-        // We should get Evcausetidx 0 and error because no further events should be scanned when there is
+        // We should get Evcausetidx 0 and error because no further events should be reticulateed when there is
         // an error.
         {
             let mut executor = BatchBlockScanFreeDaemon::new(

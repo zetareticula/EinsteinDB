@@ -31,7 +31,7 @@ use edbn::{
     InternSet,
 };
 
-use edbn::entities::OpType;
+use edbn::causets::OpType;
 
 use edb;
 use edb::{
