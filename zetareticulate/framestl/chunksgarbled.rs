@@ -5,6 +5,26 @@ use std::ops::Add;
 use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::convert::From;
+use std::fmt;
+use std::ops::{Deref, Index};
+
+//Zeta Reticula Inc 2024 Apache 2.0 License; All Rights Reserved.
+
+use ::std::rc::{
+    Rc,
+};
+
+use ::std::sync::{
+    Arc,
+};
+
+pub trait FromRc<T> {
+    fn from_rc(val: Rc<T>) -> Self;
+    fn from_arc(val: Arc<T>) -> Self;
+}
 
 // Define the ChunkedDatapoint struct to hold chunked representation of data
 struct ChunkedDatapoint<T> {

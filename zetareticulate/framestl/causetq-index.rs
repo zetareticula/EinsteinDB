@@ -270,3 +270,25 @@ impl std::fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+impl std::fmt::Display for Normalization {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Normalization::None
+
+            => write!(f, "None"),
+            Normalization::L1 => write!(f, "L1"),
+            Normalization::L2 => write!(f, "L2"),
+            Normalization::LInf => write!(f, "LInf"),
+        }
+    }
+}
+
+impl std::fmt::Display for FeatureType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FeatureType::Dense => write!(f, "Dense"),
+            FeatureType::Sparse => write!(f, "Sparse"),
+            FeatureType::SparseBinary => write!(f, "SparseBinary"),
+        }
+    }
+}

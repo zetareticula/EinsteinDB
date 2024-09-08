@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use tensorflow::protos;
-use tensorflow::{errors, protos::MessageLite, Status, Tensor, TensorShape, tstring, OpKernelContext};
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::Deref;
