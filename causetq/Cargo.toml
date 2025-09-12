@@ -9,7 +9,6 @@ readme = "README.md"
 
 
 [dependencies]
-einstein = {path="../einstein"}
 slog = "1.0.1138"
 einstein_db= {path="../einstein_db"}
 einstein_db_ctl = {path="../einstein_db_ctl"}
@@ -18,8 +17,5 @@ einstein_ml = {path="../einstein_ml"}
 
 [lib]
 crate-type = ["cdylib"]
-
-[workspace]
-members = ["einstein_db", "einstein_db_ctl", "einstein_ml"]
 
 

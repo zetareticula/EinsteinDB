@@ -1,0 +1,15 @@
+[package]
+name = "tuplespaceInstanton"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+authors = ["WHTCORPS INC"]
+license = "Apache-2.0"
+
+[lib]
+name = "tuplespaceInstanton"
+path = "src/lib.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }

@@ -34,7 +34,7 @@ protobuf-codec = [
 testexport = []
 
 [dependencies]
-batch-system = { path = "../batch-system" }
+# batch-system is included via the workspace
 bitflags = "1.0.1"
 byteorder = "1.2"
 interlocking_directorate = { path = "../interlocking_directorate" }
@@ -75,7 +75,7 @@ sst_importer = { path = "../sst_importer" }
 tempfile = "3.0"
 milevadb_query_datatype = { path = "../milevadb_query_datatype" }
 edb_alloc = { path = "../edb_alloc" }
-violetabftstore::interlock:: = { path = "../violetabftstore::interlock::" }
+# interlock is included via the workspace
 time = "0.1"
 tokio = { version = "0.2", features = ["sync", "rt-threaded"] }
 txn_types = { path = "../txn_types" }

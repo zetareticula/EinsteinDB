@@ -1,3 +1,50 @@
+### Hybrid Index (Completed Overview)
+
+EinsteinDB realizes the “Indexes are Models” principle by coupling a B+Tree-shaped page map with a learned CDF approximator that guides first-touch into the correct page range. The result is a two-phase access:
+
+1. Model probe: approximate the target page using a learned-range estimator (CDF-like), minimizing index fanout.
+2. Page refinement: use B+Tree page routing to land on exact leaf, then perform local search.
+
+This hybrid scheme supports both point lookups and range scans efficiently while avoiding long, synchronous NVM writes.
+
+#### Consistency & Crash Safety
+
+- Ordered-write discipline ensures a durable happens-before relation between index entries and KV payloads.
+- Relativistically linearizable semantics are achieved without a global clock by composing:
+  - Causal sets (Causets) for logical ordering.
+  - Lamport clocks for distributed event ordering across replicas.
+  - VioletaBFT for byzantine-tolerant commit across nodes.
+
+On recovery, pages and their differential segments are replayed in order, preserving index-key to value mapping invariants.
+
+#### Depth-First, Bit-Precise Access & Block Cache
+
+To accelerate path-following through index pages and their differential segments, EinsteinDB uses a DFS-friendly block cache:
+
+- Vector-of-vectors block cache (see `src/block_cache.rs`) maintains hot pages in LRU order.
+- DFS access patterns (from model probe to leaf) benefit from temporal locality; revisits are fast.
+- The block cache stores opaque `Vec<u8>` page blocks keyed by page IDs, and evicts LRU upon capacity pressure.
+
+This couples naturally with the CDF estimator: once a path is hinted, successive page touches remain cache-hot.
+
+#### Range Scans
+
+- Range scans begin at model-projected boundaries, then walk adjacent leaves.
+- Block cache read-ahead can be layered to prefetch neighboring pages.
+- The hybrid index retains hash-like point lookup speed and B+Tree range traversal efficiency.
+
+#### KV Operations (Put/Get/Update/Delete/Scan)
+
+- Put/Update/Delete:
+  - Append a differential index record and payload, flush with ordered-write.
+  - Periodic compaction merges differential segments back into base pages.
+- Get:
+  - Model probe → B+Tree refine → check differential overlay → return value.
+- Scan:
+  - Model-projected start → in-order leaf walk with optional prefetch via block cache.
+
+This completes the high-level operational semantics of the hybrid design described above while preserving EinsteinDB’s crash consistency and distributed linearizability guarantees.
+
 <img src="images/EinsteinDBLogo.png" alt="einsteindb_logo" width="600"/>
 
 ## [Website](https://www.einsteindb.com) | [Documentation](https://einsteindb.com/docs/latest/concepts/overview/) | [Community Chat](https://einsteindb.com/chat)
@@ -30,6 +77,136 @@ It guarantees liveness without making any timing assumptions. It ensures that no
 
 
 
+
+## Quick Start
+
+EinsteinDB includes comprehensive deployment scripts and a working relativistic causal instance:
+
+### Deployment Scripts
+
+Bootstrap the environment and run the relativistic demo:
+
+```bash
+# Install Rust nightly toolchain and utilities
+./scripts/bootstrap.sh
+
+# Run the relativistic causal consistency demo
+./scripts/run-demo.sh --release
+
+# Try the server (falls back to demo if needed)
+./scripts/run-server.sh --release
+
+# Build specific packages
+./scripts/build.sh --release --package einsteindb-prod
+
+# Run tests
+./scripts/test.sh --release
+
+# Clean build artifacts and check unused dependencies
+./scripts/prune.sh
+
+# Format and lint code
+./scripts/format-lint.sh
+```
+
+### Standalone Demo
+
+For a quick demonstration without full workspace build:
+
+```bash
+rustc standalone_consistency_demo.rs && ./standalone_consistency_demo
+```
+
+The demo showcases:
+- 3 distributed EinsteinDB nodes with Lamport timestamp coordination
+- Causal event ordering and synchronization across nodes
+- Relativistic analysis with lightlike/timelike separations
+- Byte-level program structure analysis of the causal hierarchy
+
+### Full Documentation
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment instructions and configuration options.
+
+## LRU Block Cache (Vector-of-Vectors)
+
+EinsteinDB now includes a simple LRU block cache implemented as a vector-of-vectors for depth-first, bit-precise access patterns. See `src/block_cache.rs`.
+
+Usage example:
+
+```rust
+use einsteindb_prod::block_cache::BlockCache;
+
+let mut cache = BlockCache::new(1024); // capacity in blocks
+cache.put(42, vec![0xde, 0xad, 0xbe, 0xef]);
+let hit = cache.get(&42).unwrap();
+assert_eq!(hit, &[0xde, 0xad, 0xbe, 0xef]);
+```
+
+Design notes:
+
+- Keys and blocks are stored in parallel vectors; indices reflect recency (MRU at the tail).
+- `touch()` moves accessed items to the tail. Eviction drops the head (LRU).
+- Intentional O(n) index maintenance keeps the implementation compact and cache-friendly for moderate capacities. For production, a deque + hashmap or intrusive list can be substituted.
+
+This cache provides a foundation for layering a block-based LRU over document or page-level indices, enabling DFS-friendly scans and improving spatial locality.
+
+## CI/CD and Deployment
+
+This repository includes GitHub Actions under `.github/workflows/rust.yml`. Pushing to your default branch will automatically run checks.
+
+### Version Management
+
+EinsteinDB uses semantic versioning with the following strategy:
+- **Major versions** (x.0.0): Breaking changes to API or core architecture
+- **Minor versions** (0.x.0): New features, performance improvements, additional components
+- **Patch versions** (0.0.x): Bug fixes, documentation updates, minor improvements
+
+Current version is tracked in `Cargo.toml` workspace manifest.
+
+### Branching Strategy
+
+- `main`: Production-ready code, protected branch
+- `develop`: Integration branch for features
+- `feature/*`: Individual feature development
+- `hotfix/*`: Critical production fixes
+- `release/*`: Release preparation branches
+
+### Deployment Pipeline
+
+1. **Development**: Work on feature branches, test locally with `./scripts/test.sh`
+2. **Integration**: Merge to `develop`, run full test suite
+3. **Release**: Create release branch, update version, comprehensive testing
+4. **Production**: Merge to `main`, tag release, deploy
+
+### Quick Deploy Commands
+
+```bash
+# Clean and prepare repository
+./scripts/prune.sh
+
+# Run full test suite
+./scripts/test.sh --release
+
+# Format and lint
+./scripts/format-lint.sh
+
+# Build release artifacts
+./scripts/build.sh --release
+
+# Commit and push changes
+git add .
+git commit -m "feat: deploy relativistic causal instance with comprehensive tooling"
+git push origin main
+```
+
+### Container Deployment
+
+Use the included `docker/Dockerfile` for containerized deployment:
+
+```bash
+docker build -f docker/Dockerfile -t einsteindb:latest .
+docker run -p 8080:8080 einsteindb:latest
+```
 
 
 ## License

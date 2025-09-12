@@ -5,9 +5,9 @@ edition = "2018"
 publish = false
 
 [features]
-failpoints = ["fail/failpoints"]
-protobuf-codec = ["ekvproto/protobuf-codec"]
-prost-codec = ["ekvproto/prost-codec"]
+failpoints = []
+protobuf-codec = []
+prost-codec = []
 
 [lib]
 adler32 = "1.0"
@@ -22,7 +22,7 @@ crc32fast = "1.2"
 crossbeam = "0.8.0"
 error_code = { path = "../error_code" }
 derive_more = "0.99.11"
-fail = "0.4.0"
+fail = { version = "0.4.0", features = ["failpoints"] }
 fs2 = "0.4"
 futures = "0.3"
 fxhash = "0.2.1"
@@ -56,7 +56,7 @@ minitrace = { git = "https://github.com/whtcorpsinc-incubator/minitrace-rust.git
 protobuf = "2"
 
 
-[target.'causet(target_os = "linux")'.dependencies]
+[target.'cfg(target_os = "linux")'.dependencies]
 procinfo = { git = "https://github.com/edb/procinfo-rs", rev = "5125fc1a69496b73b26b3c08b6e8afc3c665a56e" }
 procausets = "0.7"
 
@@ -64,7 +64,7 @@ procausets = "0.7"
 git = "https://github.com/edb/yatp.git"
 
 [dependencies]
-panic_hook = { path = "../panic_hook" }
+panic_hook = { path = "../../panic_hook" }
 protobuf = "2"
 regex = "1.0"
 tempfile = "3.0"

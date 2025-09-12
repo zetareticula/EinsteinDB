@@ -11,20 +11,6 @@ path = "lib.rs"
 failure = "0.1.1"
 failure_derive = "0.1.1"
 
-
-
-[dependencies.edbn]
-path = "..edb/edbn"
-
-[dependencies.causetq_allegrosql]
-path = "../allegro"
-
-[dependencies.edb_sql]
-path = "../allegrosql"
-
-[dependencies.allegrosql_promises]
-path = "../allegrosql-promises"
-
-[dependencies.edb_causetq_parityfilter]
-path = "../causetq-parityfilter"
+[dependencies.edb]
+path = "../edb/edbn"
 

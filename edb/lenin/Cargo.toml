@@ -1,0 +1,26 @@
+[package]
+name = "edb-lenin"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+[features]
+prost-codec = ["fidel_client/prost-codec", "lenin-promises/prost-codec"]
+protobuf-codec = ["fidel_client/protobuf-codec", "lenin-promises/protobuf-codec"]
+
+[dependencies]
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0"
+serde_json = "1.0"
+failure = "0.1"
+failure_derive = "0.1"
+chrono = "0.4"
+prost = { version = "0.7", optional = true }
+prost-types = { version = "0.7", optional = true }
+protobuf = { version = "2.0", optional = true }
+
+# Local dependencies
+fidel_client = { path = "fidel_client" }
+edb_util = { path = "../edbn/einsteindb_util" }
+lenin-promises = { path = "lenin-promises" }

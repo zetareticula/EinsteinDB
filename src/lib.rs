@@ -37,7 +37,7 @@ mod encoder;
 mod event_slice;
 mod CausetSquuid;
 mod causet_def;
-
+pub mod block_cache;
 
 /// # About
 ///     This is a library for the [EinsteinDB](https://einsteindb.com

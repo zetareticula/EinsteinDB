@@ -1,0 +1,14 @@
+[package]
+name = "into_other"
+version = "0.1.0"
+edition = "2018"
+publish = false
+
+authors = ["WHTCORPS INC"]
+license = "Apache-2.0"
+
+[lib]
+name = "into_other"
+path = "src/lib.rs"
+
+[dependencies]
